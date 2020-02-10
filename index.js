@@ -154,8 +154,8 @@ class NeocitiesAPIClient {
       ...opts
     }
     const getRemoteFiles = this.list()
-    const [localFiles, remoteFiles] = Promise.all([
-      afw.allFiles(path.join(folder), { shaper: f => f }),
+    const [localFiles, remoteFiles] = await Promise.all([
+      afw.allFiles(folder, { shaper: f => f }),
       getRemoteFiles
     ])
 
