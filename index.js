@@ -169,7 +169,7 @@ class NeocitiesAPIClient {
       work.push(deleteJob)
     }
 
-    await work
+    await Promise.all(work)
 
     return { filesToUpload, filesToDelete, filesSkipped }
   }
