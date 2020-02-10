@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "async-folder-walker": "^2.0.1",
-    "fetch-errors": "^2.0.0",
+    "fetch-errors": "^2.0.1",
     "form-data": "^3.0.0",
     "nanoassert": "^2.0.0",
     "node-fetch": "^2.6.0",
