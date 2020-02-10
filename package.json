@@ -1,0 +1,43 @@
+{
+  "name": "async-neocities",
+  "description": "WIP - nothing to see here",
+  "version": "0.0.1",
+  "author": "Bret Comnes <bcomnes@gmail.com> (https://bret.io)",
+  "bugs": {
+    "url": "https://github.com/bcomnes/async-neocities/issues"
+  },
+  "dependencies": {
+    "async-folder-walker": "^2.0.1",
+    "fetch-errors": "^1.0.1",
+    "form-data": "^3.0.0",
+    "nanoassert": "^2.0.0",
+    "node-fetch": "^2.6.0",
+    "pump": "^3.0.0",
+    "qs": "^6.9.1"
+  },
+  "devDependencies": {
+    "dependency-check": "^4.1.0",
+    "npm-run-all": "^4.1.5",
+    "standard": "^13.1.0",
+    "tap": "^14.10.2"
+  },
+  "homepage": "https://github.com/bcomnes/async-neocities",
+  "keywords": [],
+  "license": "MIT",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bcomnes/async-neocities.git"
+  },
+  "scripts": {
+    "test": "run-s test:*",
+    "test:deps": "dependency-check . --no-dev --no-peer",
+    "test:standard": "standard",
+    "test:tape": "tap"
+  },
+  "standard": {
+    "ignore": [
+      "dist"
+    ]
+  }
+}
