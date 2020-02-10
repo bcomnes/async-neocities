@@ -18,6 +18,7 @@ if (!token) {
     console.warn('error loading config.json')
     console.warn('using fake token, live tests disabled')
     fakeToken = true
+    token = '123456'
   }
 }
 
