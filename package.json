@@ -13,7 +13,9 @@
     "nanoassert": "^2.0.0",
     "node-fetch": "^2.6.0",
     "pump": "^3.0.0",
-    "qs": "^6.9.1"
+    "pumpify": "^2.0.1",
+    "qs": "^6.9.1",
+    "streamx": "^2.6.0"
   },
   "devDependencies": {
     "auto-changelog": "^1.16.2",

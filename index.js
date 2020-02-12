@@ -10,8 +10,19 @@ const os = require('os')
 
 const { neocitiesLocalDiff } = require('./lib/folder-diff')
 const pkg = require('./package.json')
+const SimpleTimer = require('./lib/timer')
+const { getStreamLength, meterStream } = require('./lib/stream-meter')
 
 const defaultURL = 'https://neocities.org'
+
+// Progress API constants
+const START = 'start'
+const PROGRESS = 'progress' // progress updates
+const STOP = 'stop'
+// Progress stages
+const INSPECTING = 'inspecting'
+const DIFFING = 'diffing'
+const APPLYING = 'applying'
 
 /**
  * NeocitiesAPIClient class representing a neocities api client.
@@ -102,18 +113,38 @@ class NeocitiesAPIClient {
    * @param  {Object} [opts.headers]  Additional headers to send.
    * @return {Object}             The parsed JSON response object.
    */
-  post (endpoint, formEntries, opts) {
+  async post (endpoint, formEntries, opts) {
     assert(endpoint, 'must pass endpoint as first argument')
     assert(formEntries, 'must pass formEntries as second argument')
-    const form = new FormData()
+
+    function createForm () {
+      const form = new FormData()
+      for (const { name, value } of formEntries) {
+        form.append(name, value)
+      }
+
+      return form
+    }
+
     opts = Object.assign({
       method: 'POST',
-      body: form
+      statsCb: () => {}
     }, opts)
+    const statsCb = opts.statsCb
+    delete opts.statsCb
 
-    for (const { name, value } of formEntries) {
-      form.append(name, value)
+    const stats = {
+      totalBytes: await getStreamLength(createForm()),
+      bytesWritten: 0
     }
+    statsCb(stats)
+
+    const form = createForm()
+
+    opts.body = meterStream(form, bytesRead => {
+      stats.bytesWritten = bytesRead
+      statsCb(stats)
+    })
 
     opts.headers = Object.assign(
       {},
@@ -128,7 +159,11 @@ class NeocitiesAPIClient {
   /**
    * Upload files to neocities
    */
-  upload (files) {
+  upload (files, opts = {}) {
+    opts = {
+      statsCb: () => {},
+      ...opts
+    }
     const formEntries = files.map(({ name, path }) => {
       const streamCtor = (next) => next(createReadStream(path))
       streamCtor.path = path
@@ -138,22 +173,26 @@ class NeocitiesAPIClient {
       }
     })
 
-    return this.post('upload', formEntries).then(handleResponse)
+    return this.post('upload', formEntries, { statsCb: opts.statsCb }).then(handleResponse)
   }
 
   /**
    * delete files from your website
    */
-  delete (filenames) {
+  delete (filenames, opts = {}) {
     assert(filenames, 'filenames is a required first argument')
     assert(Array.isArray(filenames), 'filenames argument must be an array of file paths in your website')
+    opts = {
+      statsCb: () => {},
+      ...opts
+    }
 
     const formEntries = filenames.map(file => ({
       name: 'filenames[]',
       value: file
     }))
 
-    return this.post('delete', formEntries).then(handleResponse)
+    return this.post('delete', formEntries, { statsCb: opts.statsCb }).then(handleResponse)
   }
 
   list (queries) {
@@ -186,20 +225,195 @@ class NeocitiesAPIClient {
       ...opts
     }
 
-    const [localFiles, remoteFiles] = await Promise.all([
-      afw.allFiles(directory, { shaper: f => f }),
-      this.list()
-    ])
+    const statsCb = opts.statsCb
+    const startDeployTime = Date.now()
+    const totalTime = new SimpleTimer(startDeployTime)
 
-    const { filesToUpload, filesToDelete, filesSkipped } = await neocitiesLocalDiff(remoteFiles.files, localFiles)
-    opts.statsCb({ filesToUpload, filesToDelete, filesSkipped })
+    // Inspection stage stats initializer
+    const inspectionStats = {
+      stage: INSPECTING,
+      status: START,
+      timer: new SimpleTimer(startDeployTime),
+      totalTime,
+      tasks: {
+        localScan: {
+          numberOfFiles: 0,
+          totalSize: 0,
+          timer: new SimpleTimer(startDeployTime)
+        },
+        remoteScan: {
+          numberOfFiles: 0,
+          totalSize: 0,
+          timer: new SimpleTimer(startDeployTime)
+        }
+      }
+    }
+    const sendInspectionUpdate = (status) => {
+      if (status) inspectionStats.status = status
+      statsCb(inspectionStats)
+    }
+    sendInspectionUpdate(START)
+
+    // Remote scan timers
+    const remoteScanJob = this.list()
+    remoteScanJob.then(({ files }) => { // Comes in the form of a response object
+      const { tasks: { remoteScan } } = inspectionStats
+      remoteScan.numberOfFiles = files.length
+      remoteScan.totalSize = files.reduce((accum, cur) => {
+        return accum + cur.size || 0
+      }, 0)
+      remoteScan.timer.stop()
+      sendInspectionUpdate(PROGRESS)
+    })
+
+    // Local scan timers and progress accumulator
+    const localScanJob = progressAccum(
+      afw.asyncFolderWalker(directory, { shaper: f => f })
+    )
+    async function progressAccum (iterator) {
+      const localFiles = []
+      const { tasks: { localScan } } = inspectionStats
+
+      for await (const file of iterator) {
+        localFiles.push(file)
+        localScan.numberOfFiles += 1
+        localScan.totalSize += file.stat.blksize
+        sendInspectionUpdate(PROGRESS)
+      }
+      return localFiles
+    }
+    localScanJob.then(files => {
+      const { tasks: { localScan } } = inspectionStats
+      localScan.timer.stop()
+      sendInspectionUpdate(PROGRESS)
+    })
+
+    // Inspection stage finalizer
+    const [localFiles, remoteFiles] = await Promise.all([
+      localScanJob,
+      this.list().then(res => res.files)
+    ])
+    inspectionStats.timer.stop()
+    sendInspectionUpdate(STOP)
+
+    // DIFFING STAGE
+
+    const diffingStats = {
+      stage: DIFFING,
+      status: START,
+      timer: new SimpleTimer(Date.now()),
+      totalTime,
+      tasks: {
+        diffing: {
+          uploadCount: 0,
+          deleteCount: 0,
+          skipCount: 0
+        }
+      }
+    }
+    statsCb(diffingStats)
+
+    const { tasks: { diffing } } = diffingStats
+    const { filesToUpload, filesToDelete, filesSkipped } = await neocitiesLocalDiff(remoteFiles, localFiles)
+    diffingStats.timer.stop()
+    diffingStats.status = STOP
+    diffing.uploadCount = filesToUpload.length
+    diffing.deleteCount = filesToDelete.length
+    diffing.skipCount = filesSkipped.length
+    statsCb(diffingStats)
+
+    const applyingStartTime = Date.now()
+    const applyingStats = {
+      stage: APPLYING,
+      status: START,
+      timer: new SimpleTimer(applyingStartTime),
+      totalTime,
+      tasks: {
+        uploadFiles: {
+          timer: new SimpleTimer(applyingStartTime),
+          bytesWritten: 0,
+          totalBytes: 0,
+          get percent () {
+            return this.totalBytes === 0 ? 0 : this.bytesWritten / this.totalBytes
+          },
+          get speed () {
+            return this.bytesWritten / this.timer.elapsed
+          }
+        },
+        deleteFiles: {
+          timer: new SimpleTimer(applyingStartTime),
+          bytesWritten: 0,
+          totalBytes: 0,
+          get percent () {
+            return this.totalBytes === 0 ? 0 : this.bytesWritten / this.totalBytes
+          },
+          get speed () {
+            return this.bytesWritten / this.timer.elapsed
+          }
+        },
+        skippedFiles: {
+          count: filesSkipped.length,
+          size: filesSkipped.reduce((accum, file) => accum + file.stat.blksize, 0)
+        }
+      }
+    }
+    const sendApplyingUpdate = (status) => {
+      if (status) applyingStats.status = status
+      statsCb(applyingStats)
+    }
+    sendApplyingUpdate(START)
+
     const work = []
-    if (filesToUpload.length > 0) work.push(this.upload(filesToUpload))
-    if (opts.cleanup && filesToDelete.length > 0) { work.push(this.delete(filesToDelete)) }
+    const { tasks: { uploadFiles, deleteFiles } } = applyingStats
+
+    if (filesToUpload.length > 0) {
+      const uploadJob = this.upload(filesToUpload, {
+        statsCb: ({ bytesWritten, totalBytes }) => {
+          uploadFiles.bytesWritten = bytesWritten
+          uploadFiles.totalBytes = totalBytes
+          sendApplyingUpdate(PROGRESS)
+        }
+      })
+      work.push(uploadJob)
+      uploadJob.then(res => {
+        uploadFiles.timer.stop()
+        sendApplyingUpdate(PROGRESS)
+      })
+    } else {
+      uploadFiles.timer.stop()
+    }
+
+    if (opts.cleanup && filesToDelete.length > 0) {
+      const deleteJob = this.delete(filesToDelete, {
+        statsCb: ({ bytesWritten, totalBytes }) => {
+          deleteFiles.bytesWritten = bytesWritten
+          deleteFiles.totalBytes = totalBytes
+          sendApplyingUpdate(PROGRESS)
+        }
+      })
+      work.push(deleteJob)
+      deleteJob.then(res => {
+        deleteFiles.timer.stop()
+        sendApplyingUpdate(PROGRESS)
+      })
+    } else {
+      deleteFiles.timer.stop()
+    }
 
     await Promise.all(work)
+    applyingStats.timer.stop()
+    sendApplyingUpdate(STOP)
 
-    return { filesToUpload, filesToDelete, filesSkipped }
+    totalTime.stop()
+
+    const statsSummary = {
+      time: totalTime,
+      inspectionStats,
+      diffingStats,
+      applyingStats
+    }
+
+    return statsSummary
   }
 }
 

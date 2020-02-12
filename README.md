@@ -176,9 +176,7 @@ Example `responses`:
 }
 ```
 
-### `wip = await client.deploy(directory, [opts])`
-
-**NOTE**: WIP
+### `stats = await client.deploy(directory, [opts])`
 
 Deploy a path to a `directory`, efficiently only uploading missing and changed files.  Files are determined to be different by size, and sha1 hash, if the size is the same.
 
