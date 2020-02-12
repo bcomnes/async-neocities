@@ -16,13 +16,20 @@
     "qs": "^6.9.1"
   },
   "devDependencies": {
+    "auto-changelog": "^1.16.2",
     "dependency-check": "^4.1.0",
+    "gh-release": "^3.5.0",
     "npm-run-all": "^4.1.5",
     "standard": "^13.1.0",
     "tap": "^14.10.2"
   },
   "homepage": "https://github.com/bcomnes/async-neocities",
-  "keywords": [],
+  "keywords": [
+    "neocities",
+    "async",
+    "api client",
+    "static hosting"
+  ],
   "license": "MIT",
   "main": "index.js",
   "repository": {
@@ -30,10 +37,12 @@
     "url": "https://github.com/bcomnes/async-neocities.git"
   },
   "scripts": {
+    "prepublishOnly": "git push --follow-tags && gh-release",
     "test": "run-s test:*",
     "test:deps": "dependency-check . --no-dev --no-peer",
     "test:standard": "standard",
-    "test:tape": "tap"
+    "test:tape": "tap",
+    "version": "auto-changelog -p --template keepachangelog auto-changelog --breaking-pattern 'BREAKING:' && git add CHANGELOG.md"
   },
   "standard": {
     "ignore": [
