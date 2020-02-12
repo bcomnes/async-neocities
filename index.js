@@ -13,7 +13,18 @@ const pkg = require('./package.json')
 
 const defaultURL = 'https://neocities.org'
 
+/**
+ * NeocitiesAPIClient class representing a neocities api client.
+ */
 class NeocitiesAPIClient {
+  /**
+   * getKey returns an apiKey from a sitename and password.
+   * @param  {String} sitename   username/sitename to log into.
+   * @param  {String} password   password to log in with.
+   * @param  {Object} [opts]     Options object.
+   * @param  {Object} [opts.url=https://neocities.org]  Base URL to request to.
+   * @return {Promise<String>}    An api key for the sitename..
+   */
   static getKey (sitename, password, opts) {
     assert(sitename, 'must pass sitename as first arg')
     assert(typeof sitename === 'string', 'user arg must be a string')
@@ -33,6 +44,13 @@ class NeocitiesAPIClient {
     return fetch(url, opts)
   }
 
+  /**
+   * Create an async-neocities api client.
+   * @param  {string} apiKey                             An apiKey to make requests with.
+   * @param  {Object} [opts]                             Options object.
+   * @param  {Object} [opts.url=https://neocities.org]   Base URL to make requests to.
+   * @return {Object}                                    An api client instance.
+   */
   constructor (apiKey, opts) {
     assert(apiKey, 'must pass apiKey as first argument')
     assert(typeof apiKey === 'string', 'apiKey must be a string')
@@ -53,7 +71,13 @@ class NeocitiesAPIClient {
   }
 
   /**
-   * Generic get request to neocities
+   * Generic GET request to neocities.
+   * @param  {String} endpoint An endpoint path to GET request.
+   * @param  {Object} [quieries] An object that gets added to the request in the form of a query string.
+   * @param  {Object} [opts] Options object.
+   * @param  {String} [opts.method=GET] The http method to use.
+   * @param  {Object} [opts.headers] Headers to include in the request.
+   * @return {Object} The parsed JSON from the request response.
    */
   get (endpoint, quieries, opts) {
     assert(endpoint, 'must pass endpoint as first argument')
@@ -70,7 +94,13 @@ class NeocitiesAPIClient {
   }
 
   /**
-   * Generic post request to neocities
+   * Low level POST request to neocities with FormData.
+   * @param  {String} endpoint    The endpoint to make the request to.
+   * @param  {Array.<{name: String, value: String}>} formEntries Array of form entries.
+   * @param  {Object} [opts]        Options object.
+   * @param  {String} [opts.method=POST] HTTP Method.
+   * @param  {Object} [opts.headers]  Additional headers to send.
+   * @return {Object}             The parsed JSON response object.
    */
   post (endpoint, formEntries, opts) {
     assert(endpoint, 'must pass endpoint as first argument')
