@@ -1,7 +1,7 @@
 # async-neocities
 [![Actions Status](https://github.com/bcomnes/async-neocities/workflows/tests/badge.svg)](https://github.com/bcomnes/async-neocities/actions)
 
-An api client for [neocities][https://neocities.org] with an async/promise API and an efficient deploy algorithm.
+An api client for [neocities][nc] with an async/promise API and an efficient deploy algorithm.
 
 ```console
 npm install async-neocities
@@ -235,3 +235,4 @@ MIT
 [qs]: https://ghub.io/qs
 [nf]: https://ghub.io/node-fetch
 [fd]: https://ghub.io/form-data
+[nc]: https://neocities.org
