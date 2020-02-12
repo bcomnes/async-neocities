@@ -3,6 +3,8 @@
 
 An api client for [neocities][nc] with an async/promise API and an efficient deploy algorithm.
 
+<center><img src="logo.jpg"></center>
+
 ```console
 npm install async-neocities
 ```
@@ -42,7 +44,7 @@ Static class method that will get an API Key from a sitename and password.
 
 ```js
 {
-  url: 'https://neocities.org'
+  url: 'https://neocities.org' // Base URL to use for requests
 }
 ```
 
@@ -54,7 +56,7 @@ Create a new API client for a given API key.
 
 ```js
 {
-  url: 'https://neocities.org'
+  url: 'https://neocities.org' // Base URL to use for requests
 }
 ```
 
@@ -62,7 +64,7 @@ Create a new API client for a given API key.
 
 Pass an array of objects with the `{ name, path }` pair to upload these files to neocities, where `name` is desired remote unix path on neocities and `path` is the local path on disk in whichever format the local operating system desires.
 
-A successful `response` example:
+A successful `response`:
 
 ```js
 {
@@ -73,9 +75,9 @@ A successful `response` example:
 
 ### `response = await client.delete(filenames)`
 
-Pass an array of path strings to delete these files to neocities.  The path strings should be the unix style path of the file you want to delete on `neocities`.
+Pass an array of path strings to delete on neocities.  The path strings should be the unix style path of the file you want to delete.
 
-A successful `response` example:
+A successful `response`:
 
 ```js
 { result: 'success', message: 'file(s) have been deleted' }
@@ -89,7 +91,7 @@ Available queries:
 
 ```js
 {
-  path // list the contents of a subdirectory
+  path // list the contents of a subdirectory on neocities
 }
 ```
 
@@ -160,6 +162,7 @@ Available queries:
 
 Example `responses`:
 
+```json
 {
   "result": "success",
   "info": {
@@ -171,6 +174,7 @@ Example `responses`:
     "tags": []
   }
 }
+```
 
 ### `wip = await client.deploy(directory, [opts])`
 
