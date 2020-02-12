@@ -232,6 +232,11 @@ Pass a `formEntries` array or iterator containing objects with `{name, value}` p
 
 Note, that `opts` is passed internally to [`node-fetch`][nf] and you can include any options that work for that client here.
 
+## See also
+
+- [Neocities API docs](https://neocities.org/api)
+- [Official Node.js API client](https://github.com/neocities/neocities-node)
+
 ## License
 
 MIT
