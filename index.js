@@ -20,11 +20,11 @@ class NeocitiesAPIClient {
     assert(typeof password, 'password arg must be a string')
 
     opts = Object.assign({
-      baseURL: defaultURL
+      url: defaultURL
     }, opts)
 
-    const baseURL = opts.baseURL
-    delete opts.baseURL
+    const baseURL = opts.url
+    delete opts.url
 
     const url = new URL('/api/key', baseURL)
     url.username = sitename
@@ -39,7 +39,6 @@ class NeocitiesAPIClient {
       url: defaultURL
     })
 
-    this.opts = opts
     this.url = opts.url
     this.apiKey = apiKey
   }
@@ -48,7 +47,7 @@ class NeocitiesAPIClient {
     return {
       Authorization: `Bearer ${this.apiKey}`,
       Accept: 'application/json',
-      'User-Agent': `deploy-to-neocities/${pkg.version} (${os.type()})`
+      'User-Agent': `async-neocities/${pkg.version} (${os.type()})`
     }
   }
 
@@ -74,6 +73,7 @@ class NeocitiesAPIClient {
    */
   post (endpoint, formEntries, opts) {
     assert(endpoint, 'must pass endpoint as first argument')
+    assert(formEntries, 'must pass formEntries as second argument')
     const form = new FormData()
     opts = Object.assign({
       method: 'POST',
@@ -141,14 +141,14 @@ class NeocitiesAPIClient {
   }
 
   /**
-   * Deploy a folder to neocities, skipping already uploaded files and optionally cleaning orphaned files.
-   * @param  {String} folder         The path of the folder to deploy.
+   * Deploy a directory to neocities, skipping already uploaded files and optionally cleaning orphaned files.
+   * @param  {String} directory      The path of the directory to deploy.
    * @param  {Object} opts           Options object.
    * @param  {Boolean} opts.cleanup  Boolean to delete orphaned files nor not.  Defaults to false.
    * @param  {Boolean} opts.statsCb  Get access to stat info before uploading is complete.
    * @return {Promise}               Promise containing stats about the deploy
    */
-  async deploy (folder, opts) {
+  async deploy (directory, opts) {
     opts = {
       cleanup: false, // delete remote orphaned files
       statsCb: () => {},
@@ -156,7 +156,7 @@ class NeocitiesAPIClient {
     }
 
     const [localFiles, remoteFiles] = await Promise.all([
-      afw.allFiles(folder, { shaper: f => f }),
+      afw.allFiles(directory, { shaper: f => f }),
       this.list()
     ])
 
