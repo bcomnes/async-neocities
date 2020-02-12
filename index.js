@@ -1,14 +1,15 @@
+const { handleResponse } = require('fetch-errors')
+const { createReadStream } = require('fs')
+const afw = require('async-folder-walker')
+const FormData = require('form-data')
 const assert = require('nanoassert')
 const fetch = require('node-fetch')
 const { URL } = require('url')
 const qs = require('qs')
 const os = require('os')
-const { createReadStream } = require('fs')
-const FormData = require('form-data')
-const { handleResponse } = require('fetch-errors')
-const afw = require('async-folder-walker')
-const pkg = require('./package.json')
+
 const { neocitiesLocalDiff } = require('./lib/folder-diff')
+const pkg = require('./package.json')
 
 const defaultURL = 'https://neocities.org'
 
@@ -171,4 +172,5 @@ class NeocitiesAPIClient {
     return { filesToUpload, filesToDelete, filesSkipped }
   }
 }
+
 module.exports = NeocitiesAPIClient
