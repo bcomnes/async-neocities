@@ -12,6 +12,7 @@ const { neocitiesLocalDiff } = require('./lib/folder-diff')
 const pkg = require('./package.json')
 const SimpleTimer = require('./lib/timer')
 const { getStreamLength, meterStream } = require('./lib/stream-meter')
+const statsHandler = require('./lib/stats-handler')
 
 const defaultURL = 'https://neocities.org'
 
@@ -55,6 +56,8 @@ class NeocitiesAPIClient {
     url.password = password
     return fetch(url, opts)
   }
+
+  static statsHanler (...args) { return statsHandler(...args) }
 
   /**
    * Create an async-neocities api client.
