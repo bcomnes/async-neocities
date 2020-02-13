@@ -234,7 +234,6 @@ class NeocitiesAPIClient {
       stage: INSPECTING,
       status: START,
       timer: new SimpleTimer(startDeployTime),
-      totalTime,
       tasks: {
         localScan: {
           numberOfFiles: 0,
@@ -302,7 +301,6 @@ class NeocitiesAPIClient {
       stage: DIFFING,
       status: START,
       timer: new SimpleTimer(Date.now()),
-      totalTime,
       tasks: {
         diffing: {
           uploadCount: 0,
@@ -328,7 +326,6 @@ class NeocitiesAPIClient {
       stage: APPLYING,
       status: START,
       timer: new SimpleTimer(applyingStartTime),
-      totalTime,
       tasks: {
         uploadFiles: {
           timer: new SimpleTimer(applyingStartTime),
