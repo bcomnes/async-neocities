@@ -1,5 +1,5 @@
 # async-neocities
-[![Actions Status](https://github.com/bcomnes/async-neocities/workflows/tests/badge.svg)](https://github.com/bcomnes/async-neocities/actions)
+[![Actions Status](https://github.com/bcomnes/async-neocities/workflows/tests/badge.svg)](https://github.com/bcomnes/async-neocities/actions) [![Greenkeeper badge](https://badges.greenkeeper.io/bcomnes/async-neocities.svg)](https://greenkeeper.io/)
 
 An api client for [neocities][nc] with an async/promise API and an efficient deploy algorithm.
 
