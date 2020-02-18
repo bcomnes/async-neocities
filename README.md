@@ -1,5 +1,5 @@
 # async-neocities
-[![Actions Status](https://github.com/bcomnes/async-neocities/workflows/tests/badge.svg)](https://github.com/bcomnes/async-neocities/actions) [![Greenkeeper badge](https://badges.greenkeeper.io/bcomnes/async-neocities.svg)](https://greenkeeper.io/)
+[![Actions Status](https://github.com/bcomnes/async-neocities/workflows/tests/badge.svg)](https://github.com/bcomnes/async-neocities/actions)
 
 An api client for [neocities][nc] with an async/promise API and an efficient deploy algorithm.
 
@@ -195,7 +195,7 @@ For an example of a stats handler, see [lib/stats-handler.js]('./lib/stats-handl
 
 Low level GET request to a given `endpoint`.
 
-**NOTE**: The `/api/` prefix is automatically added: `/api/${endpoint}` so that must be omitted from `endpoint.
+**NOTE**: The `/api/` prefix is automatically added: `/api/${endpoint}` so that must be omitted from `endpoint`.
 
 The optional `queries` object is stringified to a querystring using [`qs`][qs]a and added to the request.
 
