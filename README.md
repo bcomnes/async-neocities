@@ -5,6 +5,8 @@ An api client for [neocities][nc] with an async/promise API and an efficient dep
 
 <center><img src="logo.jpg"></center>
 
+Now available as a Github Action: [deploy-to-neocities](https://github.com/marketplace/actions/deploy-to-neocities)
+
 ```console
 npm install async-neocities
 ```
@@ -234,6 +236,7 @@ Note, that `opts` is passed internally to [`node-fetch`][nf] and you can include
 
 - [Neocities API docs](https://neocities.org/api)
 - [Official Node.js API client](https://github.com/neocities/neocities-node)
+- [bcomnes/deploy-to-neocities](https://github.com/bcomnes/deploy-to-neocities) This module as an action. 
 
 ## License
 
