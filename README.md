@@ -191,7 +191,7 @@ Deploy a path to a `directory`, efficiently only uploading missing and changed f
 }
 ```
 
-For an example of a stats handler, see [lib/stats-handler.js]('./lib/stats-handler.js').
+For an example of a stats handler, see [lib/stats-handler.js](lib/stats-handler.js).
 
 ### `client.get(endpoint, [quieries], [opts])`
 
