@@ -283,7 +283,14 @@ class NeocitiesAPIClient {
       work.push(this.delete(filesToDelete))
     }
 
-    await Promise.all(work)
+    try {
+      await Promise.all(work)
+    } catch (e) {
+      // Wrap error with stats so that we don't lose all that context
+      e.stats = stats()
+      throw e
+    }
+
     statsCb({ stage: APPLYING, status: STOP })
 
     return stats()
