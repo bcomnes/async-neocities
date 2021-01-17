@@ -1,7 +1,6 @@
 const { handleResponse } = require('fetch-errors')
 const { createReadStream } = require('fs')
 const afw = require('async-folder-walker')
-const FormData = require('form-data')
 const assert = require('nanoassert')
 const fetch = require('node-fetch')
 const { URL } = require('url')
@@ -11,8 +10,9 @@ const os = require('os')
 const { neocitiesLocalDiff } = require('./lib/folder-diff')
 const pkg = require('./package.json')
 const SimpleTimer = require('./lib/timer')
-const { getStreamLength, meterStream } = require('./lib/stream-meter')
+const { getStreamsLength, getStreamLength, meterStream, captureStreamLength } = require('./lib/stream-meter')
 const statsHandler = require('./lib/stats-handler')
+const { createForm, createForms } = require('./lib/create-form')
 
 const defaultURL = 'https://neocities.org'
 
@@ -121,15 +121,6 @@ class NeocitiesAPIClient {
     assert(endpoint, 'must pass endpoint as first argument')
     assert(formEntries, 'must pass formEntries as second argument')
 
-    function createForm () {
-      const form = new FormData()
-      for (const { name, value } of formEntries) {
-        form.append(name, value)
-      }
-
-      return form
-    }
-
     opts = Object.assign({
       method: 'POST',
       statsCb: () => {}
@@ -138,12 +129,12 @@ class NeocitiesAPIClient {
     delete opts.statsCb
 
     const stats = {
-      totalBytes: await getStreamLength(createForm()),
+      totalBytes: await getStreamLength(createForm(formEntries)),
       bytesWritten: 0
     }
     statsCb(stats)
 
-    const form = createForm()
+    const form = createForm(formEntries)
 
     opts.body = meterStream(form, bytesRead => {
       stats.bytesWritten = bytesRead
@@ -158,6 +149,69 @@ class NeocitiesAPIClient {
 
     const url = new URL(`/api/${endpoint}`, this.url)
     return fetch(url, opts)
+  }
+
+  /**
+   * Batched POST requests.  When you have a large number of form entries, use this.
+   * @param  {String} endpoint    The endpoint to make the request to.
+   * @param  {Array.<{name: String, value: String}>} formEntries Array of form entries.
+   * @param  {Object} [opts]        Options object.
+   * @param  {String} [opts.method=POST] HTTP Method.
+   * @param  {Object} [opts.headers]  Additional headers to send.
+   * @param  {Integer} opts.batchSize The number of files to upload per request. Default to 50.
+   * @return {Array.<Object>}         The array of successful request results.
+   */
+  async batchPost (endpoint, formEntries, opts) {
+    assert(endpoint, 'must pass endpoint as first argument')
+    assert(formEntries, 'must pass formEntries as second argument')
+
+    opts = Object.assign({
+      method: 'POST',
+      statsCb: () => {},
+      batchSize: 50
+    }, opts)
+
+    const statsCb = opts.statsCb
+    delete opts.statsCb
+    const batchSize = opts.batchSize
+    delete opts.batchSize
+
+    const stats = {
+      totalBytes: await getStreamsLength(createForms(formEntries, batchSize)),
+      bytesWritten: 0
+    }
+
+    statsCb(stats)
+
+    const forms = createForms(formEntries, batchSize)
+    const url = new URL(`/api/${endpoint}`, this.url)
+    const results = []
+
+    for (const form of forms) {
+      const reqOpts = { ...opts }
+
+      reqOpts.body = captureStreamLength(form, bytesRead => {
+        stats.bytesWritten += bytesRead
+        statsCb(stats)
+      })
+
+      reqOpts.headers = Object.assign(
+        {},
+        this.defaultHeaders,
+        form.getHeaders(),
+        reqOpts.headers
+      )
+
+      try {
+        const result = await fetch(url, reqOpts).then(handleResponse)
+        results.push(result)
+      } catch (e) {
+        e.results = results
+        throw e
+      }
+    }
+
+    return results
   }
 
   /**
@@ -177,7 +231,7 @@ class NeocitiesAPIClient {
       }
     })
 
-    return this.post('upload', formEntries, { statsCb: opts.statsCb }).then(handleResponse)
+    return this.batchPost('upload', formEntries, opts)
   }
 
   /**
@@ -216,11 +270,12 @@ class NeocitiesAPIClient {
 
   /**
    * Deploy a directory to neocities, skipping already uploaded files and optionally cleaning orphaned files.
-   * @param  {String} directory      The path of the directory to deploy.
-   * @param  {Object} opts           Options object.
-   * @param  {Boolean} opts.cleanup  Boolean to delete orphaned files nor not.  Defaults to false.
-   * @param  {Boolean} opts.statsCb  Get access to stat info before uploading is complete.
-   * @return {Promise}               Promise containing stats about the deploy
+   * @param  {String} directory       The path of the directory to deploy.
+   * @param  {Object} opts            Options object.
+   * @param  {Boolean} opts.cleanup   Boolean to delete orphaned files nor not.  Defaults to false.
+   * @param  {Boolean} opts.statsCb   Get access to stat info before uploading is complete.
+   * @param  {Integer} opts.batchSize The number of files to upload per request. Default to 50.
+   * @return {Promise}                Promise containing stats about the deploy
    */
   async deploy (directory, opts) {
     opts = {
@@ -256,6 +311,7 @@ class NeocitiesAPIClient {
 
     if (filesToUpload.length > 0) {
       const uploadJob = this.upload(filesToUpload, {
+        batchSize: opts.batchSize,
         statsCb ({ totalBytes, bytesWritten }) {
           statsCb({
             stage: APPLYING,

@@ -75,7 +75,7 @@ if (!fakeToken) {
     ])
 
     // console.log(uploadResults)
-    t.equal(uploadResults.result, 'success', 'list result successfull')
+    t.equal(uploadResults[0].result, 'success', 'list result successfull')
 
     const deleteResults = await client.delete([
       'toot.gif',

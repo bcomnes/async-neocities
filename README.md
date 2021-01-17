@@ -62,17 +62,20 @@ Create a new API client for a given API key.
 }
 ```
 
-### `response = await client.upload(files)`
+### `response = await client.upload(files, opts)`
 
 Pass an array of objects with the `{ name, path }` pair to upload these files to neocities, where `name` is desired remote unix path on neocities and `path` is the local path on disk in whichever format the local operating system desires.
+When a large nunber of files are passed, the request is batched into `opts.batchSize` requests.
 
-A successful `response`:
+Opts are passed through to `client.batchPost`.
+
+A successful `response` is the array of request results:
 
 ```js
-{
+[{
   result: 'success',
   message: 'your file(s) have been successfully uploaded'
-}
+}]
 ```
 
 ### `response = await client.delete(filenames)`
@@ -231,6 +234,10 @@ Pass a `formEntries` array or iterator containing objects with `{name, value}` p
 ```
 
 Note, that `opts` is passed internally to [`node-fetch`][nf] and you can include any options that work for that client here.
+
+### `client.post(endpoint, formEntries, [opts])`
+
+Low level batched post request to a given endpoint. Same as `client.post`, except requests are batched into `opts.batchSize` requests.
 
 ## See also
 
