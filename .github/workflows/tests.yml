@@ -17,11 +17,11 @@ jobs:
       uses: actions/setup-node@v2.1.4
       with:
         node-version: ${{ matrix.node }}
-    - name: npm install && npm test
-      run: |
-        npm i
-        npm test
-  
+    - run: npm i
+    - run: npm test
+      env:
+        NEOCITIES_API_TOKEN: ${{ secrets.NEOCITIES_API_TOKEN }}
+
   automerge:
     needs: test
     runs-on: ubuntu-latest
