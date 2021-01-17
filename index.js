@@ -5,7 +5,7 @@ const FormData = require('form-data')
 const assert = require('nanoassert')
 const fetch = require('node-fetch')
 const { URL } = require('url')
-const qs = require('qs')
+const qs = require('querystring')
 const os = require('os')
 
 const { neocitiesLocalDiff } = require('./lib/folder-diff')

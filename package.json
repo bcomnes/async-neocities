@@ -15,7 +15,6 @@
     "pretty-bytes": "^5.3.0",
     "pump": "^3.0.0",
     "pumpify": "^2.0.1",
-    "qs": "^6.9.1",
     "streamx": "^2.6.0"
   },
   "devDependencies": {

@@ -87,7 +87,7 @@ A successful `response`:
 
 ### `response = await client.list([queries])`
 
-Get a list of files for your site.  The optional `queries` object is passed through [qs][qs] and added to the request.
+Get a list of files for your site.  The optional `queries` object is passed through Node's [querystring][querystring] and added to the request.
 
 Available queries:
 
@@ -152,7 +152,7 @@ With the `path` query:
 
 ### `response = await client.info([queries])`
 
-Get info about your or other sites.  The optional `queries` object is passed through [qs][qs] and added to the request.
+Get info about your or other sites.  The optional `queries` object is passed through [querystring][querystring] and added to the request.
 
 Available queries:
 
@@ -199,7 +199,7 @@ Low level GET request to a given `endpoint`.
 
 **NOTE**: The `/api/` prefix is automatically added: `/api/${endpoint}` so that must be omitted from `endpoint`.
 
-The optional `queries` object is stringified to a querystring using [`qs`][qs]a and added to the request.
+The optional `queries` object is stringified to a querystring using [`querystring`][querystring]a and added to the request.
 
 `opts` includes:
 
@@ -236,13 +236,13 @@ Note, that `opts` is passed internally to [`node-fetch`][nf] and you can include
 
 - [Neocities API docs](https://neocities.org/api)
 - [Official Node.js API client](https://github.com/neocities/neocities-node)
-- [bcomnes/deploy-to-neocities](https://github.com/bcomnes/deploy-to-neocities) This module as an action. 
+- [bcomnes/deploy-to-neocities](https://github.com/bcomnes/deploy-to-neocities) This module as an action.
 
 ## License
 
 MIT
 
-[qs]: https://ghub.io/qs
+[querystring]: https://nodejs.org/api/querystring.html
 [nf]: https://ghub.io/node-fetch
 [fd]: https://ghub.io/form-data
 [nc]: https://neocities.org
