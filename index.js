@@ -288,6 +288,7 @@ class NeocitiesAPIClient {
 
     const statsCb = opts.statsCb
     const totalTime = new SimpleTimer(Date.now())
+    const { protectedFileFilter } = opts
 
     // INSPECTION STAGE
     statsCb({ stage: INSPECTING, status: START })
@@ -299,7 +300,7 @@ class NeocitiesAPIClient {
 
     // DIFFING STAGE
     statsCb({ stage: DIFFING, status: START })
-    const { filesToUpload, filesToDelete, filesSkipped, protectedFiles } = await neocitiesLocalDiff(remoteFiles, localFiles, { opts.protectedFileFilter })
+    const { filesToUpload, filesToDelete, filesSkipped, protectedFiles } = await neocitiesLocalDiff(remoteFiles, localFiles, { protectedFileFilter })
     statsCb({ stage: DIFFING, status: STOP })
 
     // APPLYING STAGE
