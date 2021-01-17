@@ -270,17 +270,19 @@ class NeocitiesAPIClient {
 
   /**
    * Deploy a directory to neocities, skipping already uploaded files and optionally cleaning orphaned files.
-   * @param  {String} directory       The path of the directory to deploy.
-   * @param  {Object} opts            Options object.
-   * @param  {Boolean} opts.cleanup   Boolean to delete orphaned files nor not.  Defaults to false.
-   * @param  {Boolean} opts.statsCb   Get access to stat info before uploading is complete.
-   * @param  {Integer} opts.batchSize The number of files to upload per request. Default to 50.
-   * @return {Promise}                Promise containing stats about the deploy
+   * @param  {String} directory        The path of the directory to deploy.
+   * @param  {Object} opts             Options object.
+   * @param  {Boolean} opts.cleanup    Boolean to delete orphaned files nor not.  Defaults to false.
+   * @param  {Boolean} opts.statsCb    Get access to stat info before uploading is complete.
+   * @param  {Integer} opts.batchSize  The number of files to upload per request. Default to 50.
+   * @param  {Function} opts.protected FileFilter A filter function that will prevent files from being cleaned up.
+   * @return {Promise}                 Promise containing stats about the deploy
    */
   async deploy (directory, opts) {
     opts = {
       cleanup: false, // delete remote orphaned files
       statsCb: () => {},
+      protectedFileFilter: (path) => false, // no protected files by default
       ...opts
     }
 
@@ -297,7 +299,7 @@ class NeocitiesAPIClient {
 
     // DIFFING STAGE
     statsCb({ stage: DIFFING, status: START })
-    const { filesToUpload, filesToDelete, filesSkipped } = await neocitiesLocalDiff(remoteFiles, localFiles)
+    const { filesToUpload, filesToDelete, filesSkipped, protectedFiles } = await neocitiesLocalDiff(remoteFiles, localFiles, { opts.protectedFileFilter })
     statsCb({ stage: DIFFING, status: STOP })
 
     // APPLYING STAGE
@@ -357,7 +359,8 @@ class NeocitiesAPIClient {
         time: totalTime.elapsed,
         filesToUpload,
         filesToDelete,
-        filesSkipped
+        filesSkipped,
+        protectedFiles
       }
     }
   }

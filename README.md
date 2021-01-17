@@ -189,8 +189,10 @@ Deploy a path to a `directory`, efficiently only uploading missing and changed f
 
 ```js
 {
-  cleanup: false // delete orphaned files on neocities that are not in the `directory`
-  statsCb: (stats) => {}
+  cleanup: false, // delete orphaned files on neocities that are not in the `directory`
+  statsCb: (stats) => {},
+  batchSize: 50, // number of files to upload per request,
+  protectedFileFilter: path => false // a function that is passed neocities file paths.  When it returns true, that path will never be cleaned up when cleanup is set to true.
 }
 ```
 
