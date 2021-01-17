@@ -237,7 +237,7 @@ Pass a `formEntries` array or iterator containing objects with `{name, value}` p
 
 Note, that `opts` is passed internally to [`node-fetch`][nf] and you can include any options that work for that client here.
 
-### `client.post(endpoint, formEntries, [opts])`
+### `client.batchPost(endpoint, formEntries, [opts])`
 
 Low level batched post request to a given endpoint. Same as `client.post`, except requests are batched into `opts.batchSize` requests.
 
