@@ -45,7 +45,7 @@
     "test:deps": "dependency-check . --no-dev --no-peer",
     "test:standard": "standard",
     "test:tape": "tap",
-    "version": "auto-changelog -p --template keepachangelog auto-changelog --breaking-pattern 'BREAKING:' && git add CHANGELOG.md"
+    "version": "auto-changelog -p --template keepachangelog auto-changelog --breaking-pattern 'BREAKING CHANGE:' && git add CHANGELOG.md"
   },
   "standard": {
     "ignore": [
