@@ -183,7 +183,7 @@ Example `responses`:
 
 ### `stats = await client.deploy(directory, [opts])`
 
-Deploy a path to a `directory`, efficiently only uploading missing and changed files.  Files are determined to be different by size, and sha1 hash, if the size is the same.
+Efficiently deploy a `directory` path to Neocities, only uploading missing and changed files.  Files are determined to be different by size, and sha1 hash, if the size is the same.
 
 `opts` include:
 
@@ -223,7 +223,7 @@ Low level POST request to a given `endpoint`.
 
 **NOTE**: The `/api/` prefix is automatically adeded: `/api/${endpoint}` so that must be omitted from `endpoint.
 
-Pass a `formEntries` array or iterator containing objects with `{name, value}` pairs to be sent with the POST request as [FormData](https://developer.mozilla.org/en-US/docs/Web/API/FormData).  The [form-datat][fd] module is used internally.
+Pass a `formEntries` array or iterator containing objects with `{name, value}` pairs to be sent with the POST request as [FormData](https://developer.mozilla.org/en-US/docs/Web/API/FormData).  The [form-data][fd] module is used internally.
 
 `opts` include:
 
