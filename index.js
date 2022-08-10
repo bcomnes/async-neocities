@@ -21,6 +21,7 @@ const START = 'start'
 const PROGRESS = 'progress' // progress updates
 const STOP = 'stop'
 const SKIP = 'skip'
+const ERROR = 'error'
 // Progress stages
 const INSPECTING = 'inspecting'
 const DIFFING = 'diffing'
@@ -206,8 +207,14 @@ class NeocitiesAPIClient {
         const result = await fetch(url, reqOpts).then(handleResponse)
         results.push(result)
       } catch (e) {
-        e.results = results
-        throw e
+        throw new Error('Neocities API error', {
+          cause: {
+            error: e,
+            results
+          }
+        })
+      } finally {
+        statsCb({ stage: ERROR, status: STOP })
       }
     }
 
@@ -346,11 +353,15 @@ class NeocitiesAPIClient {
       await Promise.all(work)
     } catch (e) {
       // Wrap error with stats so that we don't lose all that context
-      e.stats = stats()
-      throw e
+      throw new Error('Error uploading files', {
+        cause: {
+          error: e,
+          stats: stats()
+        }
+      })
+    } finally {
+      statsCb({ stage: ERROR, status: STOP })
     }
-
-    statsCb({ stage: APPLYING, status: STOP })
 
     return stats()
 
