@@ -206,13 +206,12 @@ class NeocitiesAPIClient {
       try {
         const result = await fetch(url, reqOpts).then(handleResponse)
         results.push(result)
-      } catch (e) {
-        throw new Error('Neocities API error', {
-          cause: {
-            error: e,
-            results
-          }
+      } catch (err) {
+        const wrappedError = new Error('Neocities API error', {
+          cause: err
         })
+        wrappedError.results = results
+        throw wrappedError
       } finally {
         statsCb({ stage: ERROR, status: STOP })
       }
@@ -351,14 +350,13 @@ class NeocitiesAPIClient {
 
     try {
       await Promise.all(work)
-    } catch (e) {
+    } catch (err) {
       // Wrap error with stats so that we don't lose all that context
-      throw new Error('Error uploading files', {
-        cause: {
-          error: e,
-          stats: stats()
-        }
+      const wrappedError = new Error('Error uploading files', {
+        cause: err
       })
+      wrappedError.stats = stats()
+      throw wrappedError
     } finally {
       statsCb({ stage: ERROR, status: STOP })
     }
