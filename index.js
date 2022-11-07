@@ -6,6 +6,7 @@ const fetch = require('node-fetch')
 const { URL } = require('url')
 const qs = require('querystring')
 const os = require('os')
+const { ErrorWithCause } = require('pony-cause')
 
 const { neocitiesLocalDiff } = require('./lib/folder-diff')
 const pkg = require('./package.json')
@@ -207,7 +208,7 @@ class NeocitiesAPIClient {
         const result = await fetch(url, reqOpts).then(handleResponse)
         results.push(result)
       } catch (err) {
-        const wrappedError = new Error('Neocities API error', {
+        const wrappedError = new ErrorWithCause('Neocities API error', {
           cause: err
         })
         wrappedError.results = results
@@ -352,7 +353,7 @@ class NeocitiesAPIClient {
       await Promise.all(work)
     } catch (err) {
       // Wrap error with stats so that we don't lose all that context
-      const wrappedError = new Error('Error uploading files', {
+      const wrappedError = new ErrorWithCause('Error uploading files', {
         cause: err
       })
       wrappedError.stats = stats()
