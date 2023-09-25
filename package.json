@@ -26,7 +26,7 @@
     "minimatch": "^9.0.0",
     "npm-run-all": "^4.1.5",
     "standard": "^17.0.0",
-    "tap": "^16.0.0"
+    "tap": "^18.1.4"
   },
   "homepage": "https://github.com/bcomnes/async-neocities",
   "keywords": [
