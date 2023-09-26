@@ -4,3 +4,4 @@ sandbox.js
 config.json
 package-lock.json
 neofeed
+.tap
