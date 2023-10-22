@@ -1,7 +1,7 @@
 {
   "name": "async-neocities",
   "description": "WIP - nothing to see here",
-  "version": "2.1.5",
+  "version": "2.1.6",
   "author": "Bret Comnes <bcomnes@gmail.com> (https://bret.io)",
   "bugs": {
     "url": "https://github.com/bcomnes/async-neocities/issues"
@@ -55,7 +55,10 @@
     ]
   },
   "tap": {
-    "serial": ["lib", "test.js"],
+    "serial": [
+      "lib",
+      "test.js"
+    ],
     "typecheck": false,
     "allow-incomplete-coverage": true,
     "coverage-report": [
