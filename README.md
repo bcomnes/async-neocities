@@ -38,6 +38,11 @@ deploySite.then(info => { console.log('done deploying site!') })
 
 It's interactive and will help you set up your config and keys.
 
+The site name is configured to a file in cwd called `deploy-to-neocities.json` that looks like:
+
+```json
+{"siteName":"the-name-of-the-site"}
+```
 
 ```console
 Usage: async-neocities [options]
@@ -58,7 +63,7 @@ async-neocities (v2.1.6)
 
 You can set the flags with ENV vars
 
-- `ASYNC_NEOCITIES_API_KEY` or `NEOCITIES_API_TOKEN`: the API token matching the site name.
+- `ASYNC_NEOCITIES_API_KEY` or `NEOCITIES_API_TOKEN`: the API token matching the site name, but you should set and commit the `deploy-to-neocities.json` file.
 - `ASYNC_NEOCITIES_SITE_NAME`: the name of the site to deploy to.
 
 ## API
