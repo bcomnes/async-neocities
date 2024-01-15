@@ -12,8 +12,8 @@
     "url": "https://github.com/bcomnes/async-neocities/issues"
   },
   "engines": {
-    "node": ">20",
-    "npm": ">10"
+    "node": ">=20",
+    "npm": ">=10"
   },
   "dependencies": {
     "@lukeed/ms": "^2.0.2",
