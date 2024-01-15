@@ -4,8 +4,9 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { NeocitiesAPIClient } from './index.js'
 import { statsHandler } from './lib/stats-handler.js'
+import desm from 'desm'
 
-const __dirname = import.meta.dirname
+const __dirname = desm(import.meta.url)
 
 let token = process.env.NEOCITIES_API_TOKEN
 let fakeToken = false
