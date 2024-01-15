@@ -58,7 +58,7 @@ Usage: async-neocities [options]
     --clear-key           Remove the currently assoicated API key
     --force-auth          Force re-authorization of current working directory
 
-async-neocities (v2.1.6)
+async-neocities (v3.0.0)
 ```
 
 You can set the flags with ENV vars
