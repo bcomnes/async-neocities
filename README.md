@@ -32,6 +32,35 @@ deploySite.then(info => { console.log('done deploying site!') })
   .catch(e => { throw e })
 ```
 
+## Bin
+
+`async-neocities` ships a bin that lets you deploy to neocities locally or in CI.
+
+It's interactive and will help you set up your config and keys.
+
+
+```console
+Usage: async-neocities [options]
+
+    Example: async-neocities --src public
+
+    --help, -h            print help text
+    --src, -s             The directory to deploy to neocities (default: "public")
+    --cleanup, -c         Destructively clean up orphaned files on neocities
+    --protect, -p         String to minimatch files which will never be cleaned up
+    --status              Print auth status of current working directory
+    --print-key           Print api-key status of current working directory
+    --clear-key           Remove the currently assoicated API key
+    --force-auth          Force re-authorization of current working directory
+
+async-neocities (v2.1.6)
+```
+
+You can set the flags with ENV vars
+
+- `ASYNC_NEOCITIES_API_KEY` or `NEOCITIES_API_TOKEN`: the API token matching the site name.
+- `ASYNC_NEOCITIES_SITE_NAME`: the name of the site to deploy to.
+
 ## API
 
 ### `import { NeocitiesAPIClient } from 'async-neocities'`

@@ -66,6 +66,8 @@ const cfg = createApplicationConfig(pkg.name)
 
 const args = parseArgs({ options })
 
+const isCI = process.env['CI']
+
 if (args.values['version']) {
   console.log(pkg.version)
   process.exit(0)
@@ -174,6 +176,10 @@ async function main () {
   } else {
     // Config file not found or siteName is missing
     console.log('deploy-to-neocities.json not found or siteName is missing.')
+    if (isCI) {
+      console.log('Running in CI, skipping prompts')
+      process.exit(1)
+    }
     console.log('Please enter siteName:')
 
     // Setup readline interface
@@ -210,6 +216,10 @@ async function main () {
 
     // Ask user for Neocities password
     // Ask user for password
+    if (isCI) {
+      console.log('Running in CI, skipping prompts')
+      process.exit(1)
+    }
     const password = await passwordPrompt('Enter Neocities password: ')
 
     if (!password) {
