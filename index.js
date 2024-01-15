@@ -1,24 +1,24 @@
 // Replace require with import statements
 import { request, fetch } from 'undici'
+// @ts-ignore
 import { handleResponse } from 'fetch-errors'
 import { createReadStream } from 'fs'
 import afw from 'async-folder-walker'
-import assert from 'nanoassert'
+// @ts-ignore
+import assert from 'webassert'
 import { URL } from 'url'
 import qs from 'querystring'
 import os from 'os'
 
 // Use import for local files as well
 import { neocitiesLocalDiff } from './lib/folder-diff.js'
-import { readPackage } from 'read-pkg'
 import { SimpleTimer } from './lib/timer.js'
 import { getStreamsLength, getStreamLength, meterStream, captureStreamLength } from './lib/stream-meter.js'
 import { statsHandler } from './lib/stats-handler.js'
 import { createForm, createForms } from './lib/create-form.js'
+import { pkg } from './pkg.cjs'
 
 const defaultURL = 'https://neocities.org'
-
-const pkg = await readPackage({ cwd: import.meta.directory })
 
 // Progress API constants
 const START = 'start'
@@ -40,10 +40,10 @@ export class NeocitiesAPIClient {
    * @param  {String} sitename   username/sitename to log into.
    * @param  {String} password   password to log in with.
    * @param  {Object} [opts]     Options object.
-   * @param  {Object} [opts.url=https://neocities.org]  Base URL to request to.
+   * @param  {string} [opts.url='https://neocities.org']  Base URL to request to.
    * @return {Promise<String>}    An api key for the sitename..
    */
-  static getKey (sitename, password, opts) {
+  static async getKey (sitename, password, opts) {
     assert(sitename, 'must pass sitename as first arg')
     assert(typeof sitename === 'string', 'user arg must be a string')
     assert(password, 'must pass a password as the second arg')
@@ -56,11 +56,28 @@ export class NeocitiesAPIClient {
     const baseURL = opts.url
     delete opts.url
 
+    if (!baseURL) throw new Error('A url base is required')
+
     const url = new URL('/api/key', baseURL)
-    opts.headers = {
-      Authorization: `Basic ${btoa(sitename + ':' + password)}`
+
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Basic ${btoa(sitename + ':' + password)}`
+      }
+    })
+    if (!response.ok) {
+      let cause
+      try {
+        cause = await response.text()
+      } catch (err) {
+        cause = err
+      }
+      throw new Error('Response was not okay', { cause })
     }
-    return fetch(url, opts)
+    /** @type {*} */
+    const json = await response.json()
+    const token = json.api_key
+    return token
   }
 
   static statsHandler (...args) { return statsHandler(...args) }
@@ -281,13 +298,13 @@ export class NeocitiesAPIClient {
 
   /**
    * Deploy a directory to neocities, skipping already uploaded files and optionally cleaning orphaned files.
-   * @param  {String} directory        The path of the directory to deploy.
-   * @param  {Object} opts             Options object.
-   * @param  {Boolean} opts.cleanup    Boolean to delete orphaned files nor not.  Defaults to false.
-   * @param  {Boolean} opts.statsCb    Get access to stat info before uploading is complete.
-   * @param  {Integer} opts.batchSize  The number of files to upload per request. Default to 50.
-   * @param  {Function} opts.protected FileFilter A filter function that will prevent files from being cleaned up.
-   * @return {Promise}                 Promise containing stats about the deploy
+   * @param  {string} directory        The path of the directory to deploy.
+   * @param  {object} opts             Options object.
+   * @param  {boolean} opts.cleanup    Boolean to delete orphaned files nor not.  Defaults to false.
+   * @param  {boolean} opts.statsCb    Get access to stat info before uploading is complete.
+   * @param  {number} opts.batchSize  The number of files to upload per request. Default to 50.
+   * @param  {function} opts.protected FileFilter A filter function that will prevent files from being cleaned up.
+   * @return {Promise<object>}                 Promise containing stats about the deploy
    */
   async deploy (directory, opts) {
     opts = {
