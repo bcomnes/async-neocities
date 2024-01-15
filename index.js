@@ -1,21 +1,24 @@
-const { handleResponse } = require('fetch-errors')
-const { createReadStream } = require('fs')
-const afw = require('async-folder-walker')
-const assert = require('nanoassert')
-const fetch = require('node-fetch')
-const { URL } = require('url')
-const qs = require('querystring')
-const os = require('os')
-const { ErrorWithCause } = require('pony-cause')
+// Replace require with import statements
+import { request, fetch } from 'undici'
+import { handleResponse } from 'fetch-errors'
+import { createReadStream } from 'fs'
+import afw from 'async-folder-walker'
+import assert from 'nanoassert'
+import { URL } from 'url'
+import qs from 'querystring'
+import os from 'os'
 
-const { neocitiesLocalDiff } = require('./lib/folder-diff')
-const pkg = require('./package.json')
-const SimpleTimer = require('./lib/timer')
-const { getStreamsLength, getStreamLength, meterStream, captureStreamLength } = require('./lib/stream-meter')
-const statsHandler = require('./lib/stats-handler')
-const { createForm, createForms } = require('./lib/create-form')
+// Use import for local files as well
+import { neocitiesLocalDiff } from './lib/folder-diff.js'
+import { readPackage } from 'read-pkg'
+import { SimpleTimer } from './lib/timer.js'
+import { getStreamsLength, getStreamLength, meterStream, captureStreamLength } from './lib/stream-meter.js'
+import { statsHandler } from './lib/stats-handler.js'
+import { createForm, createForms } from './lib/create-form.js'
 
 const defaultURL = 'https://neocities.org'
+
+const pkg = await readPackage({ cwd: import.meta.directory })
 
 // Progress API constants
 const START = 'start'
@@ -31,7 +34,7 @@ const APPLYING = 'applying'
 /**
  * NeocitiesAPIClient class representing a neocities api client.
  */
-class NeocitiesAPIClient {
+export class NeocitiesAPIClient {
   /**
    * getKey returns an apiKey from a sitename and password.
    * @param  {String} sitename   username/sitename to log into.
@@ -54,8 +57,9 @@ class NeocitiesAPIClient {
     delete opts.url
 
     const url = new URL('/api/key', baseURL)
-    url.username = sitename
-    url.password = password
+    opts.headers = {
+      Authorization: `Basic ${btoa(sitename + ':' + password)}`
+    }
     return fetch(url, opts)
   }
 
@@ -150,7 +154,7 @@ class NeocitiesAPIClient {
       opts.headers)
 
     const url = new URL(`/api/${endpoint}`, this.url)
-    return fetch(url, opts)
+    return request(url, opts)
   }
 
   /**
@@ -205,10 +209,10 @@ class NeocitiesAPIClient {
       )
 
       try {
-        const result = await fetch(url, reqOpts).then(handleResponse)
+        const result = await request(url, reqOpts)
         results.push(result)
       } catch (err) {
-        const wrappedError = new ErrorWithCause('Neocities API error', {
+        const wrappedError = new Error('Neocities API error', {
           cause: err
         })
         wrappedError.results = results
@@ -257,7 +261,7 @@ class NeocitiesAPIClient {
       value: file
     }))
 
-    return this.post('delete', formEntries, { statsCb: opts.statsCb }).then(handleResponse)
+    return this.post('delete', formEntries, { statsCb: opts.statsCb })
   }
 
   list (queries) {
@@ -353,7 +357,7 @@ class NeocitiesAPIClient {
       await Promise.all(work)
     } catch (err) {
       // Wrap error with stats so that we don't lose all that context
-      const wrappedError = new ErrorWithCause('Error uploading files', {
+      const wrappedError = new Error('Error uploading files', {
         cause: err
       })
       wrappedError.stats = stats()
@@ -376,5 +380,3 @@ class NeocitiesAPIClient {
     }
   }
 }
-
-module.exports = NeocitiesAPIClient

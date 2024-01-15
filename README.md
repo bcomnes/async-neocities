@@ -14,13 +14,13 @@ npm install async-neocities
 ## Usage
 
 ``` js
-const path = require('path')
-const Neocities = require('async-neocities')
+import path from 'node:path'
+import { NeocitiesAPIClient } from 'async-neocities'
 
 async function deploySite () {
-  const token = await Neocities.getKey('sitename', 'password')
+  const token = await NeocitiesAPIClient.getKey('sitename', 'password')
 
-  const client = new Neocities(token)
+  const client = new NeocitiesAPIClient(token)
 
   console.log(await client.list()) // site files
   console.log(await client.info()) // site info
@@ -34,11 +34,11 @@ deploySite.then(info => { console.log('done deploying site!') })
 
 ## API
 
-### `Neocities = require('async-neocities')`
+### `import { NeocitiesAPIClient } from 'async-neocities'`
 
 Import the Neocities API client.
 
-### `apiKey = await Neocities.getKey(sitename, password, [opts])`
+### `apiKey = await NeocitiesAPIClient.getKey(sitename, password, [opts])`
 
 Static class method that will get an API Key from a sitename and password.
 
@@ -50,7 +50,7 @@ Static class method that will get an API Key from a sitename and password.
 }
 ```
 
-### `client = new Neocities(apiKey, [opts])`
+### `client = new NeocitiesAPIClient(apiKey, [opts])`
 
 Create a new API client for a given API key.
 

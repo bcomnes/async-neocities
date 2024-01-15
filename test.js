@@ -1,9 +1,11 @@
-const tap = require('tap')
+import tap from 'tap'
 
-const { readFileSync } = require('fs')
-const { resolve } = require('path')
-const NeocitiesAPIClient = require('.')
-const statsHanlder = require('./lib/stats-handler')
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+import { NeocitiesAPIClient } from './index.js'
+import { statsHandler } from './lib/stats-handler.js'
+
+const __dirname = import.meta.dirname
 
 let token = process.env.NEOCITIES_API_TOKEN
 let fakeToken = false
@@ -74,15 +76,15 @@ if (!fakeToken) {
       }
     ])
 
-    // console.log(uploadResults)
-    t.equal(uploadResults[0].result, 'success', 'list result successfull')
+    // console.log(uploadResults[0])
+    t.equal(uploadResults[0].statusCode, 200, 'list result successfull')
 
     const deleteResults = await client.delete([
       'toot.gif',
       'img/tootzzz.png'
     ])
     // console.log(deleteResults)
-    t.equal(deleteResults.result, 'success', 'list result successfull')
+    t.equal(deleteResults.statusCode, 200, 'list result successfull')
   })
 
   tap.test('can deploy folders', async t => {
@@ -91,7 +93,7 @@ if (!fakeToken) {
     const deployStats = await client.deploy(
       resolve(__dirname, 'fixtures'),
       {
-        statsCb: statsHanlder(),
+        statsCb: statsHandler(),
         cleanup: false
       }
     )
@@ -103,7 +105,7 @@ if (!fakeToken) {
     const redeployStats = await client.deploy(
       resolve(__dirname, 'fixtures'),
       {
-        statsCb: statsHanlder(),
+        statsCb: statsHandler(),
         cleanup: false
       }
     )
@@ -115,7 +117,7 @@ if (!fakeToken) {
     const cleanupStats = await client.deploy(
       resolve(__dirname, 'fixtures/empty'),
       {
-        statsCb: statsHanlder(),
+        statsCb: statsHandler(),
         cleanup: true
       }
     )
