@@ -54,7 +54,7 @@ const options = {
   },
   'clear-key': {
     type: 'boolean',
-    help: 'Remove the currently assoicated API key'
+    help: 'Remove the currently associated API key'
   },
   'force-auth': {
     type: 'boolean',
