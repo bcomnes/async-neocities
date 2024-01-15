@@ -14,13 +14,13 @@ npm install async-neocities
 ## Usage
 
 ``` js
-const path = require('path')
-const Neocities = require('async-neocities')
+import path from 'node:path'
+import { NeocitiesAPIClient } from 'async-neocities'
 
 async function deploySite () {
-  const token = await Neocities.getKey('sitename', 'password')
+  const token = await NeocitiesAPIClient.getKey('sitename', 'password')
 
-  const client = new Neocities(token)
+  const client = new NeocitiesAPIClient(token)
 
   console.log(await client.list()) // site files
   console.log(await client.info()) // site info
@@ -32,13 +32,42 @@ deploySite.then(info => { console.log('done deploying site!') })
   .catch(e => { throw e })
 ```
 
+## Bin
+
+`async-neocities` ships a bin that lets you deploy to neocities locally or in CI.
+
+It's interactive and will help you set up your config and keys.
+
+
+```console
+Usage: async-neocities [options]
+
+    Example: async-neocities --src public
+
+    --help, -h            print help text
+    --src, -s             The directory to deploy to neocities (default: "public")
+    --cleanup, -c         Destructively clean up orphaned files on neocities
+    --protect, -p         String to minimatch files which will never be cleaned up
+    --status              Print auth status of current working directory
+    --print-key           Print api-key status of current working directory
+    --clear-key           Remove the currently assoicated API key
+    --force-auth          Force re-authorization of current working directory
+
+async-neocities (v2.1.6)
+```
+
+You can set the flags with ENV vars
+
+- `ASYNC_NEOCITIES_API_KEY` or `NEOCITIES_API_TOKEN`: the API token matching the site name.
+- `ASYNC_NEOCITIES_SITE_NAME`: the name of the site to deploy to.
+
 ## API
 
-### `Neocities = require('async-neocities')`
+### `import { NeocitiesAPIClient } from 'async-neocities'`
 
 Import the Neocities API client.
 
-### `apiKey = await Neocities.getKey(sitename, password, [opts])`
+### `apiKey = await NeocitiesAPIClient.getKey(sitename, password, [opts])`
 
 Static class method that will get an API Key from a sitename and password.
 
@@ -50,7 +79,7 @@ Static class method that will get an API Key from a sitename and password.
 }
 ```
 
-### `client = new Neocities(apiKey, [opts])`
+### `client = new NeocitiesAPIClient(apiKey, [opts])`
 
 Create a new API client for a given API key.
 
