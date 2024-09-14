@@ -6,7 +6,7 @@ import assert from 'node:assert'
 import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
 import readline from 'node:readline'
-import { minimatch } from 'minimatch'
+import * as minimatchPkg from 'minimatch'
 import { NeocitiesAPIClient } from './index.js'
 import { stackWithCauses } from 'pony-cause'
 import { format } from '@lukeed/ms'
@@ -15,6 +15,8 @@ import { printHelpText } from 'argsclopts'
 import { pkg } from './pkg.cjs'
 // @ts-ignore
 import passwordPrompt from 'password-prompt'
+
+const { minimatch } = minimatchPkg
 
 /**
  * @typedef {import('argsclopts').ArgscloptsParseArgsOptionsConfig} ArgscloptsParseArgsOptionsConfig
