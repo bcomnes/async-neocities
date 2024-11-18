@@ -1,50 +1,38 @@
 import test from 'node:test'
 import assert from 'node:assert'
-import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { NeocitiesAPIClient } from './index.js'
-import { statsHandler } from './lib/stats-handler.js'
-import desm from 'desm'
 
-const __dirname = desm(import.meta.url)
+const __dirname = import.meta.dirname
 
-let token = process.env.NEOCITIES_API_TOKEN
+let token = process.env['NEOCITIES_API_TOKEN']
 let fakeToken = false
 
 if (!token) {
-  try {
-    const config = JSON.parse(readFileSync(resolve(__dirname, 'config.json')))
-    token = config.token
-    test('token loaded', async t => {
-      assert.ok(token)
-    })
-  } catch (e) {
-    console.warn('error loading config.json')
-    console.warn('using fake token, live tests disabled')
-    fakeToken = true
-    token = '123456'
-  }
+  console.warn('error loading .env file. Don\'t forget to pass node --env-file-if-exists=.env')
+  console.warn('using fake token, live tests disabled')
+  fakeToken = true
+  token = '123456'
 }
 
-test('basic client api', async t => {
+test('basic client api', async _t => {
   const client = new NeocitiesAPIClient(token)
 
   assert.ok(client.info, 'info method available')
   assert.ok(client.list, 'list method available')
-  assert.ok(client.get, 'get method available')
-  assert.ok(client.post, 'post method available')
+  assert.ok(client.upload, 'upload method available')
+  assert.ok(client.delete, 'delete method available')
+  assert.ok(client.deploy, 'deploy method available')
 })
 
 if (!fakeToken) {
-  test('can get info about site', async t => {
+  test('can get info about site', async _t => {
     const client = new NeocitiesAPIClient(token)
 
     const info = await client.info()
-    // console.log(info)
-    assert.equal(info.result, 'success', 'info requesst successfull')
+    assert.strictEqual(info.result, 'success', 'info request successful')
     const list = await client.list()
-    // console.log(list)
-    assert.equal(list.result, 'success', 'list result successfull')
+    assert.strictEqual(list.result, 'success', 'list result successful')
   })
 
   // test('form data works the way I think', t => {
@@ -63,7 +51,7 @@ if (!fakeToken) {
   //   form.pipe(concatStream);
   // });
 
-  test('can upload and delete files', async t => {
+  test('can upload and delete files', async _t => {
     const client = new NeocitiesAPIClient(token)
 
     const uploadResults = await client.upload([
@@ -77,54 +65,65 @@ if (!fakeToken) {
       }
     ])
 
-    // console.log(uploadResults[0])
-    assert.equal(uploadResults[0].statusCode, 200, 'list result successfull')
+    // console.dir({ uploadResults }, { depth: 999 })
+    assert.strictEqual(uploadResults.results.length, 1, 'upload result have a success result')
+    assert.strictEqual(uploadResults.results[0]?.body.result, 'success', 'upload result have a success result')
+    assert.strictEqual(uploadResults.results[0]?.files.length, 2, 'The result batch has 2 files in it')
+    assert.strictEqual(uploadResults.errors.length, 0, 'No errors occurred')
 
     const deleteResults = await client.delete([
       'toot.gif',
       'img/tootzzz.png'
     ])
-    // console.log(deleteResults)
-    assert.equal(deleteResults.statusCode, 200, 'list result successfull')
+    // console.log({ deleteResults })
+    assert.strictEqual(deleteResults?.body.result, 'success', 'Delete result is successful')
   })
 
-  test('can deploy folders', async t => {
+  test('can deploy folders', async _t => {
     const client = new NeocitiesAPIClient(token)
 
-    const deployStats = await client.deploy(
-      resolve(__dirname, 'fixtures'),
-      {
-        statsCb: statsHandler(),
-        cleanup: false
-      }
-    )
+    const deployStats = await client.deploy({
+      directory: resolve(__dirname, 'fixtures'),
+      cleanup: false
+    })
 
     assert.ok(deployStats)
 
-    // console.dir(deployStats, { depth: 99, colors: true })
+    // console.dir({ deployStats }, { depth: 99, colors: true })
 
-    const redeployStats = await client.deploy(
-      resolve(__dirname, 'fixtures'),
-      {
-        statsCb: statsHandler(),
-        cleanup: false
-      }
-    )
+    assert.strictEqual(deployStats.errors.length, 0, 'no errors!')
+    assert.strictEqual(deployStats.results.length, 1, 'one upload batch')
+
+    const redeployStats = await client.deploy({
+      directory: resolve(__dirname, 'fixtures'),
+      cleanup: false
+    })
 
     assert.ok(redeployStats)
+    assert.strictEqual(redeployStats.errors.length, 0, 'no errors!')
+    assert.strictEqual(redeployStats.results.length, 0, 'noop all work skipped')
 
-    // console.dir(redeployStats, { depth: 99, colors: true })
+    // console.dir({ redeployStats }, { depth: 99, colors: true })
 
-    const cleanupStats = await client.deploy(
-      resolve(__dirname, 'fixtures/empty'),
-      {
-        statsCb: statsHandler(),
-        cleanup: true
-      }
-    )
+    const cleanupStats = await client.deploy({
+      directory: resolve(__dirname, 'fixtures/empty'),
+      cleanup: true
+    })
 
     assert.ok(cleanupStats)
 
-    // console.dir(cleanupStats, { depth: 99, colors: true })
+    assert.strictEqual(cleanupStats.errors.length, 0, 'no errors!')
+    assert.strictEqual(cleanupStats.results.length, 2, '1 upload and 1 delete step')
+
+    // console.dir({ cleanupStats }, { depth: 99, colors: true })
+
+    const reCleanupStats = await client.deploy({
+      directory: resolve(__dirname, 'fixtures/empty'),
+      cleanup: true
+    })
+
+    assert.ok(reCleanupStats)
+    assert.strictEqual(reCleanupStats.errors.length, 0, 'no errors!')
+    assert.strictEqual(reCleanupStats.results.length, 0, 'noop all work skipped')
   })
 }

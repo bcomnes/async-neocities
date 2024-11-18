@@ -1,11 +1,12 @@
 # async-neocities
 [![Actions Status](https://github.com/bcomnes/async-neocities/workflows/tests/badge.svg)](https://github.com/bcomnes/async-neocities/actions)
 
-An api client for [neocities][nc] with an async/promise API and an efficient deploy algorithm.
+An api client for [neocities][nc] with an async/promise API and an efficient content-aware diff algorithm.
+Now including full type support!
 
 <center><img src="logo.jpg"></center>
 
-Now available as a Github Action: [deploy-to-neocities](https://github.com/marketplace/actions/deploy-to-neocities)
+Also available as a Github Action: [deploy-to-neocities](https://github.com/marketplace/actions/deploy-to-neocities)
 
 ```console
 npm install async-neocities
@@ -17,19 +18,21 @@ npm install async-neocities
 import path from 'node:path'
 import { NeocitiesAPIClient } from 'async-neocities'
 
-async function deploySite () {
-  const token = await NeocitiesAPIClient.getKey('sitename', 'password')
+const apiKeyResponse = await NeocitiesAPIClient.getKey({
+  siteName: 'siteName',
+  ownerPassword: 'password'
+})
 
-  const client = new NeocitiesAPIClient(token)
+const client = new NeocitiesAPIClient(apiKeyResponse.api_key)
 
-  console.log(await client.list()) // site files
-  console.log(await client.info()) // site info
+console.log(await client.list()) // site files
+console.log(await client.info()) // site info
 
-  return client.deploy(path.join(__dirname, './site-contents'))
-}
-
-deploySite.then(info => { console.log('done deploying site!') })
-  .catch(e => { throw e })
+await client.deploy({
+  directory: path.join(import.meta.dirname, './site-contents'),
+  cleanup: true, // Delete orphaned files
+  includeUnsupportedFiles: true // Upload unsupported files. Paid neocities feature
+})
 ```
 
 ## Bin
@@ -53,12 +56,14 @@ Usage: async-neocities [options]
     --src, -s             The directory to deploy to neocities (default: "public")
     --cleanup, -c         Destructively clean up orphaned files on neocities
     --protect, -p         String to minimatch files which will never be cleaned up
+    --supporter, -S       Neocities Supporter mode: bypass file type restrictions
     --status              Print auth status of current working directory
     --print-key           Print api-key status of current working directory
-    --clear-key           Remove the currently assoicated API key
+    --clear-key           Remove the currently associated API key
     --force-auth          Force re-authorization of current working directory
+    --preview, -P         Preview the files that will be uploaded
 
-async-neocities (v3.0.0)
+async-neocities (v3.0.7)
 ```
 
 You can set the flags with ENV vars
@@ -72,69 +77,69 @@ You can set the flags with ENV vars
 
 Import the Neocities API client.
 
-### `apiKey = await NeocitiesAPIClient.getKey(sitename, password, [opts])`
+### `{ result, api_key } = await NeocitiesAPIClient.getKey({ siteName, ownerPassword })`
 
-Static class method that will get an API Key from a sitename and password.
+Static class method that will get an API Key from a `siteName` and `ownerPassword`.
 
-`opts` include:
-
-```js
-{
-  url: 'https://neocities.org' // Base URL to use for requests
-}
-```
-
-### `client = new NeocitiesAPIClient(apiKey, [opts])`
+### `client = new NeocitiesAPIClient(apiKey)`
 
 Create a new API client for a given API key.
 
-`opts` include:
+All API methods return data from a successful request.
+Any bad responses will throw an error.
+Anything else that goes wrong will throw an error.
+If you call any methods from a client instance, be sure to handle the errors!
+
+### `uploadResult = await client.upload(files)`
+
+Pass an array of objects with the `{ name, path }` pair to upload these files to neocities, where `name` is desired remote unix path on neocities and `path` is the local path on disk in whichever format the local operating system desires.
+
+Returns a `UploadResults` result:
 
 ```js
 {
-  url: 'https://neocities.org' // Base URL to use for requests
+   errors: [],
+   results: [
+     {
+       type: 'uploadResult',
+       body: {
+          result: 'success',
+          message: 'files have been uploaded'
+        },
+       },
+       files: [
+         name: 'index.html',
+         path: '/path/to/index.html'
+        ]
+     }
+   ]
 }
 ```
 
-### `response = await client.upload(files, opts)`
-
-Pass an array of objects with the `{ name, path }` pair to upload these files to neocities, where `name` is desired remote unix path on neocities and `path` is the local path on disk in whichever format the local operating system desires.
-When a large nunber of files are passed, the request is batched into `opts.batchSize` requests.
-
-Opts are passed through to `client.batchPost`.
-
-A successful `response` is the array of request results:
-
-```js
-[{
-  result: 'success',
-  message: 'your file(s) have been successfully uploaded'
-}]
-```
-
-### `response = await client.delete(filenames)`
+### `deleteResults = await client.delete(files)`
 
 Pass an array of path strings to delete on neocities.  The path strings should be the unix style path of the file you want to delete.
 
-A successful `response`:
-
-```js
-{ result: 'success', message: 'file(s) have been deleted' }
-```
-
-### `response = await client.list([queries])`
-
-Get a list of files for your site.  The optional `queries` object is passed through Node's [querystring][querystring] and added to the request.
-
-Available queries:
+A successful `deleteResult`:
 
 ```js
 {
-  path // list the contents of a subdirectory on neocities
+   type: "deleteResult",
+   body: {
+     result: 'success',
+     message: 'file(s) have been deleted'
+   },
+    files: [
+      '/path/to/index.html'
+    ]
 }
 ```
 
-Example `responses`:
+### `siteFileList = await client.list([path])`
+
+Get a list of files for your site.  The optional `path` argument can be used to list files only at a given path of the website.
+
+Example `siteFileList`:
 
 ```json
 {
@@ -170,7 +175,7 @@ Example `responses`:
 }
 ```
 
-With the `path` query:
+With the `path` argument:
 
 ```json
 {
@@ -187,19 +192,13 @@ With the `path` query:
 }
 ```
 
-### `response = await client.info([queries])`
+### `siteInfo = await client.info([siteName])`
 
-Get info about your or other sites.  The optional `queries` object is passed through [querystring][querystring] and added to the request.
+Get info about your or other sites.
+The optional `siteName` argument can be used to request unauthenticated info about any neocities website.
+When `siteName` is omitted, the authenticated site's info is returned.
 
-Available queries:
-
-```js
-{
-  sitename // get info on a given sitename
-}
-```
-
-Example `responses`:
+Example `siteInfo`:
 
 ```json
 {
@@ -215,65 +214,29 @@ Example `responses`:
 }
 ```
 
-### `stats = await client.deploy(directory, [opts])`
+### `deployResult = await client.deploy({ directory, [cleanup], [includeUnsupportedFiles], [protectedFileFilter] })`
 
 Efficiently deploy a `directory` path to Neocities, only uploading missing and changed files.  Files are determined to be different by size, and sha1 hash, if the size is the same.
 
-`opts` include:
+Other options include:
 
 ```js
 {
   cleanup: false, // delete orphaned files on neocities that are not in the `directory`
-  statsCb: (stats) => {},
-  batchSize: 50, // number of files to upload per request,
-  protectedFileFilter: path => false // a function that is passed neocities file paths.  When it returns true, that path will never be cleaned up when cleanup is set to true.
+  protectedFileFilter: path => false, // a function that is passed neocities file paths.  When it returns true, that path will never be cleaned up when cleanup is set to true.
+  includeUnsupportedFiles: false // include files that are not supported by neocities in the upload. This is a paid neocities supporter feature.
 }
 ```
 
-For an example of a stats handler, see [lib/stats-handler.js](lib/stats-handler.js).
+`deployResult` is a complex type that includes a results summary, error summary and diff summary. Please check the types on this one.
 
-### `client.get(endpoint, [quieries], [opts])`
+### `diff = await client.previewDeploy({ directory, [includeUnsupportedFiles], [protectedFileFilter] })`
 
-Low level GET request to a given `endpoint`.
+Preview a deploy from a `directory` path to Neocities. Returns the diff summary without modifying anything.
 
-**NOTE**: The `/api/` prefix is automatically added: `/api/${endpoint}` so that must be omitted from `endpoint`.
+Other options include:
 
-The optional `queries` object is stringified to a querystring using [`querystring`][querystring]a and added to the request.
-
-`opts` includes:
-
-```js
-{
-  method: 'GET',
-  headers: { ...client.defaultHeaders, ...opts.headers },
-}
-```
-
-Note, that `opts` is passed internally to [`node-fetch`][nf] and you can include any options that work for that client here.
-
-### `client.post(endpoint, formEntries, [opts])`
-
-Low level POST request to a given `endpoint`.
-
-**NOTE**: The `/api/` prefix is automatically adeded: `/api/${endpoint}` so that must be omitted from `endpoint.
-
-Pass a `formEntries` array or iterator containing objects with `{name, value}` pairs to be sent with the POST request as [FormData](https://developer.mozilla.org/en-US/docs/Web/API/FormData).  The [form-data][fd] module is used internally.
-
-`opts` include:
-
-```js
-{
-  method: 'POST',
-  body: new FormData(), // Don't override this.
-  headers: { ...client.defafultHeaders, ...formHeaders, opts.headers }
-}
-```
-
-Note, that `opts` is passed internally to [`node-fetch`][nf] and you can include any options that work for that client here.
-
-### `client.batchPost(endpoint, formEntries, [opts])`
-
-Low level batched post request to a given endpoint. Same as `client.post`, except requests are batched into `opts.batchSize` requests.
+`diff` is a complex type that includes a diff summary. Please check the types on this one.
 
 ## See also
 
