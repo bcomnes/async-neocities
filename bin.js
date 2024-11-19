@@ -1,24 +1,24 @@
 #!/usr/bin/env node
-/* eslint-disable dot-notation */
 
-import { parseArgs } from 'node:util'
+/**
+ * @import {ArgscloptsParseArgsOptionsConfig} from 'argsclopts'
+*/
+
+import { format } from '@lukeed/ms'
+import createApplicationConfig from 'application-config'
+import { printHelpText } from 'argsclopts'
+import { minimatch } from 'minimatch'
 import assert from 'node:assert'
 import { promises as fs } from 'node:fs'
 import { join } from 'node:path'
 import readline from 'node:readline'
-import { minimatch } from 'minimatch'
+import { parseArgs } from 'node:util'
 import { NeocitiesAPIClient } from './index.js'
-import { stackWithCauses } from 'pony-cause'
-import { format } from '@lukeed/ms'
-import createApplicationConfig from 'application-config'
-import { printHelpText } from 'argsclopts'
+import { SimpleTimer } from './lib/timer.js'
 import { pkg } from './pkg.cjs'
+
 // @ts-ignore
 import passwordPrompt from 'password-prompt'
-
-/**
- * @typedef {import('argsclopts').ArgscloptsParseArgsOptionsConfig} ArgscloptsParseArgsOptionsConfig
- */
 
 /** @type {ArgscloptsParseArgsOptionsConfig} */
 const options = {
@@ -44,6 +44,12 @@ const options = {
     short: 'p',
     help: 'String to minimatch files which will never be cleaned up'
   },
+  supporter: {
+    type: 'boolean',
+    short: 'S',
+    help: 'Neocities Supporter mode: bypass file type restrictions',
+    default: false
+  },
   status: {
     type: 'boolean',
     help: 'Print auth status of current working directory'
@@ -59,6 +65,12 @@ const options = {
   'force-auth': {
     type: 'boolean',
     help: 'Force re-authorization of current working directory'
+  },
+  preview: {
+    type: 'boolean',
+    short: 'P',
+    help: 'Preview the files that will be uploaded',
+    default: false
   }
 }
 
@@ -162,12 +174,14 @@ if (args.values['clear-key']) {
 
 const src = args.values['src']
 const cleanup = Boolean(args.values['cleanup'])
+const includeUnsupportedFiles = Boolean(args.values['supporter'])
 const protectedFiles = String(args.values['protect'])
 const forceAuth = Boolean(args.values['force-auth'])
 
 async function main () {
   const cwd = process.cwd()
   let siteName = await getSiteName(cwd)
+  /** @type {string | undefined} */
   let apiKey
 
   // Check if siteName is in the config
@@ -228,12 +242,15 @@ async function main () {
     }
 
     /// Use the async-neocities package to get the API keys
-    const newApiKey = await NeocitiesAPIClient.getKey(siteName, password)
+    const newApiKey = await NeocitiesAPIClient.getKey({
+      siteName,
+      ownerPassword: password
+    })
     if (!newApiKey) {
       console.log('The API did not return an API key for some reason.')
       process.exit(1)
     }
-    apiKey = newApiKey
+    apiKey = newApiKey.api_key
 
     // Save the API key in the config store
     const configData = /** @type {*} */ (await cfg.read())
@@ -249,39 +266,81 @@ async function main () {
   const stat = await fs.stat(distDir)
   assert(stat.isDirectory(), 'dist_dir must be a directory that exists')
 
+  const deployTimer = new SimpleTimer()
+
   const client = new NeocitiesAPIClient(apiKey)
 
-  const deployOpts = {
-    cleanup,
-    statsCb: NeocitiesAPIClient.statsHandler(),
-    protectedFileFilter: minimatch.filter(protectedFiles)
-  }
+  if (args.values['preview']) {
+    const diff = await client.previewDeploy({
+      directory: distDir,
+      protectedFileFilter: minimatch.filter(protectedFiles),
+      includeUnsupportedFiles
+    })
+    deployTimer.stop()
+    console.log(`Preview deploy to Neocities in ${format(deployTimer.elapsed)}:`)
+    console.log(`    Upload ${diff.filesToUpload.length} files`)
+    console.log(`    ${cleanup ? 'Delete' : 'Orphan'} ${diff.filesToDelete.length} files`)
+    console.log(`    Skip ${diff.filesSkipped.length} files`)
+    console.log(`    ${includeUnsupportedFiles ? 'Include' : 'Ignore'} ${diff.unsupportedFiles.length} unsupported files:`)
+    if (diff.unsupportedFiles.length) {
+      console.log(diff.unsupportedFiles)
+    }
+    console.log(`    Found ${diff.protectedFiles.length} protected files:`)
+    if (diff.protectedFiles.length) {
+      console.log(diff.protectedFiles)
+    }
 
-  const stats = await client.deploy(distDir, deployOpts)
+    process.exit(0)
+  } else {
+    const results = await client.deploy({
+      directory: distDir,
+      cleanup,
+      protectedFileFilter: minimatch.filter(protectedFiles),
+      includeUnsupportedFiles
+    })
 
-  console.log(`Deployed to Neocities in ${format(stats.time)}:`)
-  console.log(`    Uploaded ${stats.filesToUpload.length} files`)
-  console.log(`    ${cleanup ? 'Deleted' : 'Orphaned'} ${stats.filesToDelete.length} files`)
-  console.log(`    Skipped ${stats.filesSkipped.length} files`)
-  console.log(`    ${stats.protectedFiles.length} protected files:`)
-  if (stats.protectedFiles.length) {
-    console.log(stats.protectedFiles)
+    deployTimer.stop()
+
+    if (results.errors.length > 0) {
+      console.log('The Deploy finished with Errors! Dumping the results:\n\n')
+      console.log('Successful results:')
+      console.dir({ results: results.results }, { depth: null })
+      console.log('\n\n')
+
+      console.log('Deploy Diff:')
+      console.dir({ diff: results.diff }, { depth: null })
+      console.log('\n\n')
+
+      console.log('Deploy Errors:')
+      console.dir({ errors: results.errors }, { depth: null })
+      console.log('\n\n')
+
+      console.log('Please inspect the errors and debug output to look for hints as to why this might have failed.')
+      console.log('Your website may have ')
+      process.exit(1)
+    } else {
+      console.log(`Deployed to Neocities in ${format(deployTimer.elapsed)}:`)
+      console.log(`    Uploaded ${results.diff.filesToUpload.length} files`)
+      console.log(`    ${cleanup ? 'Deleted' : 'Orphaned'} ${results.diff.filesToDelete.length} files`)
+      console.log(`    Skipped ${results.diff.filesSkipped.length} files`)
+      console.log(`    ${includeUnsupportedFiles ? 'Included' : 'Ignored'} ${results.diff.unsupportedFiles.length} unsupported files:`)
+      if (results.diff.unsupportedFiles.length) {
+        console.log(results.diff.unsupportedFiles)
+      }
+      console.log(`    Found ${results.diff.protectedFiles.length} protected files:`)
+      if (results.diff.protectedFiles.length) {
+        console.log(results.diff.protectedFiles)
+      }
+      process.exit(0)
+    }
   }
 }
 
 // Run the main function with top-level await
 await main().catch(err => {
-  console.error(stackWithCauses(err))
-  if (err.stats) {
-    console.log('Files to upload: ')
-    console.dir(err.stats.filesToUpload, { colors: true, depth: 999 })
-
-    if (cleanup) {
-      console.log('Files to delete: ')
-      console.dir(err.stats.filesToDelete, { colors: true, depth: 999 })
-    }
-  }
-
+  console.error(err)
+  console.log()
+  console.log('async-neocities failed to deploy due to an unexpected throw. Please inspect the error above for hints.')
   process.exit(1)
 })
 

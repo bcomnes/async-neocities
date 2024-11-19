@@ -2,7 +2,7 @@
 
 ## Releasing
 
-Changelog, and releasing is autmated with npm scripts.  To create a release:
+Changelog, and releasing is automated with npm scripts.  To create a release:
 
 - Ensure a clean working git workspace.
 - Run `npm version {patch,minor,major}`.

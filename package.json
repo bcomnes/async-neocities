@@ -17,29 +17,22 @@
   },
   "dependencies": {
     "@lukeed/ms": "^2.0.2",
+    "@types/combined-stream": "^1.0.6",
     "application-config": "^3.0.0",
     "argsclopts": "^1.0.4",
     "async-folder-walker": "^3.0.1",
-    "desm": "^1.3.0",
-    "fetch-errors": "^2.0.1",
     "form-data": "^4.0.0",
+    "minimatch": "^10.0.0",
     "password-prompt": "1.1.3",
-    "pony-cause": "^2.1.4",
-    "pretty-bytes": "^6.0.0",
-    "pump": "^3.0.0",
-    "pumpify": "^2.0.1",
-    "streamx": "^2.6.0",
-    "undici": "^6.0.0",
-    "webassert": "^3.0.2",
-    "minimatch": "^10.0.0"
+    "undici": "^6.0.0"
   },
   "devDependencies": {
     "@voxpelli/tsconfig": "^15.0.0",
     "auto-changelog": "^2.2.0",
     "c8": "^10.0.0",
     "gh-release": "^7.0.0",
+    "neostandard": "^0.11.8",
     "npm-run-all": "^4.1.5",
-    "standard": "^17.0.0",
     "typescript": "~5.6.2"
   },
   "homepage": "https://github.com/bcomnes/async-neocities",
@@ -56,11 +49,18 @@
     "url": "https://github.com/bcomnes/async-neocities.git"
   },
   "scripts": {
-    "prepublishOnly": "git push --follow-tags && gh-release -y",
+    "prepublishOnly": "npm run build && git push --follow-tags && gh-release -y",
+    "postpublish": "npm run clean",
     "test": "run-s test:*",
-    "test:standard": "standard",
-    "test:node-test": "c8 node --test --test-reporter spec",
-    "version": "auto-changelog -p --template keepachangelog auto-changelog --breaking-pattern 'BREAKING CHANGE:' && git add CHANGELOG.md"
+    "test:lint": "eslint",
+    "test:tsc": "tsc",
+    "test:node": "c8 node --test --env-file-if-exists=.env",
+    "version": "auto-changelog -p --template keepachangelog auto-changelog --breaking-pattern 'BREAKING CHANGE:' && git add CHANGELOG.md",
+    "clean": "run-p clean:*",
+    "clean:declarations-top": "rm -rf $(find . -maxdepth 1 -type f \\( -name '*.d.ts*' -o -name '*.cts*' \\))",
+    "clean:declarations-lib": "rm -rf $(find lib -type f -name '*.d.ts*' ! -name '*-types.d.ts')",
+    "build": "npm run clean && run-p build:*",
+    "build:declaration": "tsc -p declaration.tsconfig.json"
   },
   "standard": {
     "ignore": [

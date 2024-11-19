@@ -6,3 +6,5 @@ package-lock.json
 neofeed
 .tap
 coverage
+.env
+.vscode
