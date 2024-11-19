@@ -2,6 +2,9 @@ import test from 'node:test'
 import assert from 'node:assert'
 import { resolve } from 'node:path'
 import { NeocitiesAPIClient } from './index.js'
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 const __dirname = import.meta.dirname
 

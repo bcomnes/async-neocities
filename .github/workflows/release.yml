@@ -9,7 +9,7 @@ on:
         required: true
 
 env:
-  node_version: 'lts/*'
+  node_version: '20'
   FORCE_COLOR: 2
   
 concurrency: # prevent concurrent releases
