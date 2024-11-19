@@ -1,5 +1,6 @@
 # async-neocities
 [![Actions Status](https://github.com/bcomnes/async-neocities/workflows/tests/badge.svg)](https://github.com/bcomnes/async-neocities/actions)
+[![Types in JS](https://img.shields.io/badge/types_in_js-yes-brightgreen)](https://github.com/voxpelli/types-in-js)
 
 An api client for [neocities][nc] with an async/promise API and an efficient content-aware diff algorithm.
 Now including full type support!
