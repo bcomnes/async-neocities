@@ -62,10 +62,5 @@
     "clean:declarations-lib": "rm -rf $(find lib -type f -name '*.d.ts*' ! -name '*-types.d.ts')",
     "build": "npm run clean && run-p build:*",
     "build:declaration": "tsc -p declaration.tsconfig.json"
-  },
-  "standard": {
-    "ignore": [
-      "dist"
-    ]
   }
 }

@@ -4,7 +4,6 @@
  * @import {ArgscloptsParseArgsOptionsConfig} from 'argsclopts'
 */
 
-import { format } from '@lukeed/ms'
 import createApplicationConfig from 'application-config'
 import { printHelpText } from 'argsclopts'
 import { minimatch } from 'minimatch'
@@ -19,6 +18,9 @@ import { pkg } from './pkg.cjs'
 
 // @ts-ignore
 import passwordPrompt from 'password-prompt'
+import { printDeployText, printPreviewText, printResultsErrorDump } from './lib/output-strings.js'
+
+export { printDeployText, printPreviewText, printResultsErrorDump }
 
 /** @type {ArgscloptsParseArgsOptionsConfig} */
 const options = {
@@ -266,7 +268,7 @@ async function main () {
   const stat = await fs.stat(distDir)
   assert(stat.isDirectory(), 'dist_dir must be a directory that exists')
 
-  const deployTimer = new SimpleTimer()
+  const timer = new SimpleTimer()
 
   const client = new NeocitiesAPIClient(apiKey)
 
@@ -276,19 +278,14 @@ async function main () {
       protectedFileFilter: minimatch.filter(protectedFiles),
       includeUnsupportedFiles
     })
-    deployTimer.stop()
-    console.log(`Preview deploy to Neocities in ${format(deployTimer.elapsed)}:`)
-    console.log(`    Upload ${diff.filesToUpload.length} files`)
-    console.log(`    ${cleanup ? 'Delete' : 'Orphan'} ${diff.filesToDelete.length} files`)
-    console.log(`    Skip ${diff.filesSkipped.length} files`)
-    console.log(`    ${includeUnsupportedFiles ? 'Include' : 'Ignore'} ${diff.unsupportedFiles.length} unsupported files:`)
-    if (diff.unsupportedFiles.length) {
-      console.log(diff.unsupportedFiles)
-    }
-    console.log(`    Found ${diff.protectedFiles.length} protected files:`)
-    if (diff.protectedFiles.length) {
-      console.log(diff.protectedFiles)
-    }
+    timer.stop()
+
+    printPreviewText({
+      diff,
+      timer,
+      cleanup,
+      includeUnsupportedFiles
+    })
 
     process.exit(0)
   } else {
@@ -299,38 +296,21 @@ async function main () {
       includeUnsupportedFiles
     })
 
-    deployTimer.stop()
+    timer.stop()
 
     if (results.errors.length > 0) {
-      console.log('The Deploy finished with Errors! Dumping the results:\n\n')
-      console.log('Successful results:')
-      console.dir({ results: results.results }, { depth: null })
-      console.log('\n\n')
-
-      console.log('Deploy Diff:')
-      console.dir({ diff: results.diff }, { depth: null })
-      console.log('\n\n')
-
-      console.log('Deploy Errors:')
-      console.dir({ errors: results.errors }, { depth: null })
-      console.log('\n\n')
-
-      console.log('Please inspect the errors and debug output to look for hints as to why this might have failed.')
-      console.log('Your website may have ')
+      printResultsErrorDump({
+        results,
+        timer
+      })
       process.exit(1)
     } else {
-      console.log(`Deployed to Neocities in ${format(deployTimer.elapsed)}:`)
-      console.log(`    Uploaded ${results.diff.filesToUpload.length} files`)
-      console.log(`    ${cleanup ? 'Deleted' : 'Orphaned'} ${results.diff.filesToDelete.length} files`)
-      console.log(`    Skipped ${results.diff.filesSkipped.length} files`)
-      console.log(`    ${includeUnsupportedFiles ? 'Included' : 'Ignored'} ${results.diff.unsupportedFiles.length} unsupported files:`)
-      if (results.diff.unsupportedFiles.length) {
-        console.log(results.diff.unsupportedFiles)
-      }
-      console.log(`    Found ${results.diff.protectedFiles.length} protected files:`)
-      if (results.diff.protectedFiles.length) {
-        console.log(results.diff.protectedFiles)
-      }
+      printDeployText({
+        results,
+        timer,
+        cleanup,
+        includeUnsupportedFiles
+      })
       process.exit(0)
     }
   }
