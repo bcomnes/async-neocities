@@ -20,8 +20,6 @@ import { pkg } from './pkg.cjs'
 import passwordPrompt from 'password-prompt'
 import { printDeployText, printPreviewText, printResultsErrorDump } from './lib/output-strings.js'
 
-export { printDeployText, printPreviewText, printResultsErrorDump }
-
 /** @type {ArgscloptsParseArgsOptionsConfig} */
 const options = {
   help: {

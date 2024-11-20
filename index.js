@@ -5,6 +5,8 @@
 
 import * as Endpoints from './lib/api-endpoints.js'
 export { supportedFiletypes } from './lib/supported-filetypes.js'
+export { printDeployText, printPreviewText, printResultsErrorDump } from './lib/output-strings.js'
+export { SimpleTimer } from './lib/timer.js'
 
 /**
  * NeocitiesAPIClient class representing a neocities api client.
