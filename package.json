@@ -24,7 +24,7 @@
     "form-data": "^4.0.0",
     "minimatch": "^10.0.0",
     "password-prompt": "1.1.3",
-    "undici": "^6.0.0"
+    "undici": "^7.0.0"
   },
   "devDependencies": {
     "@voxpelli/tsconfig": "^15.0.0",
