@@ -226,6 +226,7 @@ Other options include:
   cleanup: false, // delete orphaned files on neocities that are not in the `directory`
   protectedFileFilter: path => false, // a function that is passed neocities file paths.  When it returns true, that path will never be cleaned up when cleanup is set to true.
   includeUnsupportedFiles: false // include files that are not supported by neocities in the upload. This is a paid neocities supporter feature.
+  uploadSort: (a: FileUpload, b: FileUpload) => number // A custom sort function for the files to upload.
 }
 ```
 

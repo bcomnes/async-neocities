@@ -87,7 +87,12 @@ if (!fakeToken) {
 
     const deployStats = await client.deploy({
       directory: resolve(__dirname, 'fixtures'),
-      cleanup: false
+      cleanup: false,
+      uploadSort: (a, b) => a.name < b.name
+        ? 1
+        : a.name > b.name
+          ? -1
+          : 0
     })
 
     assert.ok(deployStats)

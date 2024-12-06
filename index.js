@@ -96,6 +96,7 @@ export class NeocitiesAPIClient {
    * @param  {boolean}  [options.cleanup=false]     Set cleanup to true to delete orphaned file.
    * @param  {boolean}  [options.includeUnsupportedFiles=false]     Set to true to bypass file type restrictions.
    * @param  {(path: string) => boolean} [options.protectedFileFilter] A filter function to filter out file you want to ignore.
+   * @param  {Endpoints.Comparator<FileUpload>} [options.uploadSort] A sort function that lets you sort file upload order prior to uploading. FileUpload.name is probably what you want to sort by.
    * @return {ReturnType<typeof Endpoints.deployToNeocities>} The fetched site info
    */
   async deploy (options) {
@@ -112,6 +113,7 @@ export class NeocitiesAPIClient {
    * @param  {string}   options.directory   The path to the directory preview deploy.
    * @param  {boolean}  [options.includeUnsupportedFiles=false]     Set to true to bypass file type restrictions.
    * @param  {(path: string) => boolean} [options.protectedFileFilter] A filter function to filter out file you want to ignore.
+   * @param  {Endpoints.Comparator<FileUpload>} [options.uploadSort] A sort function that lets you sort file upload order prior to uploading. FileUpload.name is probably what you want to sort by.
    * @return {Promise<AsyncNeocitiesDiff>}
    */
   async previewDeploy (options) {
