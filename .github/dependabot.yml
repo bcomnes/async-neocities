@@ -10,6 +10,11 @@ updates:
     # Check the npm registry for updates every day (weekdays)
     schedule:
       interval: "daily"
+    groups:
+      typescript:
+        patterns:
+          - "@voxpelli/tsconfig"
+          - "typescript"
   # Enable updates to github actions
   - package-ecosystem: "github-actions"
     directory: "/"
