@@ -1,0 +1,36 @@
+name: Update supported file types
+
+on:
+  schedule:
+    - cron: '0 9 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        persist-credentials: false
+    - name: Use Node.js
+      uses: actions/setup-node@v7
+      with:
+        node-version-file: package.json
+    - name: Update supported file types
+      run: node scripts/update-supported-filetypes.js
+    - name: Create or update pull request
+      uses: peter-evans/create-pull-request@v8.1.1
+      with:
+        token: ${{ github.token }}
+        commit-message: 'chore: sync supported Neocities file types'
+        branch: automation/update-supported-filetypes
+        delete-branch: true
+        title: 'chore: sync supported Neocities file types'
+        body: |
+          This PR synchronizes `lib/supported-filetypes.js` with the current list published by Neocities.
+
+          The list was fetched from https://neocities.org/site_files/allowed_types.

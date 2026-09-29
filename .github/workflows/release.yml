@@ -1,18 +1,43 @@
 
-name: npm bump
+name: Version and Release
 
 on:
   workflow_dispatch:
     inputs:
-      newversion:
-        description: 'npm version {major,minor,patch}'
+      version-type:
+        description: 'Version type'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prepatch
+          - preminor
+          - premajor
+          - prerelease
+          - from-git
+          - custom
+        default: patch
+        required: true
+      new-version:
+        description: 'Custom version (only used when version-type is custom)'
+        required: false
+      preid:
+        description: 'Prerelease identifier'
+        required: false
+      dist-tag:
+        description: 'npm distribution tag'
+        default: latest
         required: true
 
 env:
-  node_version: '20'
-  FORCE_COLOR: 2
-  
-concurrency: # prevent concurrent releases
+  FORCE_COLOR: 3
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
   group: npm-bump
   cancel-in-progress: true
 
@@ -22,21 +47,23 @@ jobs:
     steps:
     - uses: actions/checkout@v7
       with:
-        # fetch full history so things like auto-changelog work properly
+        persist-credentials: true
         fetch-depth: 0
-    - name: Use Node.js ${{ env.node_version }}
-      uses: actions/setup-node@v6
+    - name: Use Node.js
+      uses: actions/setup-node@v7
       with:
-        node-version: ${{ env.node_version }}
-        # setting a registry enables the NODE_AUTH_TOKEN env variable where we can set an npm token.  REQUIRED
-        registry-url: 'https://registry.npmjs.org'
+        node-version-file: package.json
     - run: npm i
     - run: npm test
-    - name: npm version && npm publish
-      uses: bcomnes/npm-bump@v3.0.2
+    - name: Version and publish to npm
+      id: npm-bump
+      uses: bcomnes/npm-bump@v3.0.4
       with:
-        git_email: bcomnes@gmail.com
-        git_username: ${{ github.actor }}
-        newversion: ${{ github.event.inputs.newversion }}
-        github_token: ${{ secrets.GITHUB_TOKEN }} # built in actions token.  Passed tp gh-release if in use.
-        npm_token: ${{ secrets.NPM_TOKEN }} # user set secret token generated at npm
+        version-type: ${{ github.event.inputs['version-type'] }}
+        new-version: ${{ github.event.inputs['new-version'] }}
+        preid: ${{ github.event.inputs.preid }}
+        dist-tag: ${{ github.event.inputs['dist-tag'] }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+    - run: echo "$RELEASE_TAG"
+      env:
+        RELEASE_TAG: ${{ steps.npm-bump.outputs['release-tag'] }}
