@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert'
 import { resolve } from 'node:path'
+import { inspect } from 'node:util'
 import { NeocitiesAPIClient } from './index.js'
 
 const __dirname = import.meta.dirname
@@ -65,7 +66,7 @@ if (!fakeToken) {
       }
     ])
 
-    // console.dir({ uploadResults }, { depth: 999 })
+    assertNoErrors(uploadResults.errors, 'upload errors')
     assert.strictEqual(uploadResults.results.length, 1, 'upload result have a success result')
     assert.strictEqual(uploadResults.results[0]?.body.result, 'success', 'upload result have a success result')
     assert.strictEqual(uploadResults.results[0]?.files.length, 2, 'The result batch has 2 files in it')
@@ -93,8 +94,7 @@ if (!fakeToken) {
     })
 
     assert.ok(deployStats)
-
-    // console.dir({ deployStats }, { depth: 99, colors: true })
+    assertNoErrors(deployStats.errors, 'initial deploy errors')
 
     assert.strictEqual(deployStats.errors.length, 0, 'no errors!')
     assert.strictEqual(deployStats.results.length, 1, 'one upload batch')
@@ -105,6 +105,7 @@ if (!fakeToken) {
     })
 
     assert.ok(redeployStats)
+    assertNoErrors(redeployStats.errors, 'redeploy errors')
     assert.strictEqual(redeployStats.errors.length, 0, 'no errors!')
     assert.strictEqual(redeployStats.results.length, 0, 'noop all work skipped')
 
@@ -116,7 +117,7 @@ if (!fakeToken) {
     })
 
     assert.ok(cleanupStats)
-
+    assertNoErrors(cleanupStats.errors, 'cleanup deploy errors')
     assert.strictEqual(cleanupStats.errors.length, 0, 'no errors!')
     assert.strictEqual(cleanupStats.results.length, 2, '1 upload and 1 delete step')
 
@@ -128,7 +129,17 @@ if (!fakeToken) {
     })
 
     assert.ok(reCleanupStats)
+    assertNoErrors(reCleanupStats.errors, 'repeat cleanup deploy errors')
     assert.strictEqual(reCleanupStats.errors.length, 0, 'no errors!')
     assert.strictEqual(reCleanupStats.results.length, 0, 'noop all work skipped')
   })
+}
+
+/**
+ * Include nested HTTP error details in integration-test failures.
+ * @param {Error[]} errors
+ * @param {string} label
+ */
+function assertNoErrors (errors, label) {
+  assert.strictEqual(errors.length, 0, `${label}:\n${inspect(errors, { depth: null })}`)
 }
