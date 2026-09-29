@@ -5,6 +5,10 @@ on: [push, pull_request]
 env:
   FORCE_COLOR: 2
 
+concurrency:
+  group: async-neocities-tests-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
