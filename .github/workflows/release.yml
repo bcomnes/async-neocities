@@ -57,7 +57,7 @@ jobs:
     - run: npm test
     - name: Version and publish to npm
       id: npm-bump
-      uses: bcomnes/npm-bump@v3
+      uses: bcomnes/npm-bump@v3.0.4
       with:
         version-type: ${{ github.event.inputs['version-type'] }}
         new-version: ${{ github.event.inputs['new-version'] }}

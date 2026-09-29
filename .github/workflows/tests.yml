@@ -18,7 +18,7 @@ jobs:
     steps:
     - uses: actions/checkout@v7
     - name: Use Node.js ${{ matrix.node }}
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@v7
       with:
         node-version: ${{ matrix.node }}
     - run: npm i
@@ -33,7 +33,7 @@ jobs:
       pull-requests: write
       contents: write
     steps:
-      - uses: fastify/github-action-merge-dependabot@v3
+      - uses: fastify/github-action-merge-dependabot@v3.15.0
         if: ${{ github.actor == 'dependabot[bot]' && github.event_name == 'pull_request' && contains(github.head_ref, 'dependabot/github_actions') }}
         with:
           github-token: ${{secrets.github_token}}

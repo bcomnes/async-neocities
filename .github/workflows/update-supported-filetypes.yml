@@ -23,7 +23,7 @@ jobs:
     - name: Update supported file types
       run: node scripts/update-supported-filetypes.js
     - name: Create or update pull request
-      uses: peter-evans/create-pull-request@v7
+      uses: peter-evans/create-pull-request@v8.1.1
       with:
         token: ${{ github.token }}
         commit-message: 'chore: sync supported Neocities file types'
