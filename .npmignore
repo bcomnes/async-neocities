@@ -1,7 +1,7 @@
 fixtures
 config.json
 logo.jpg
-.nyc_output
+
 .github
 coverage
 .tap
