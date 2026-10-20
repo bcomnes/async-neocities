@@ -72,7 +72,7 @@ export class NeocitiesAPIClient {
     const { apiKey } = this
     return await Endpoints.listFilesForSite({
       apiKey,
-      path
+      ...(path === undefined ? {} : { path })
     })
   }
 
@@ -85,7 +85,7 @@ export class NeocitiesAPIClient {
     const { apiKey } = this
     return await Endpoints.getInfo({
       apiKey,
-      siteName
+      ...(siteName === undefined ? {} : { siteName })
     })
   }
 
