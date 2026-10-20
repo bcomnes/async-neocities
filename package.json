@@ -27,11 +27,11 @@
     "undici": "^8.0.2"
   },
   "devDependencies": {
-    "@voxpelli/tsconfig": "^16.1.0",
+    "@voxpelli/tsconfig": "^17.0.0",
     "neostandard": "^0.14.1",
     "npm-run-all": "^4.1.5",
     "releasearoni": "^0.2.0",
-    "typescript": "~6.0.3"
+    "typescript": "~7.0.2"
   },
   "homepage": "https://github.com/bcomnes/async-neocities",
   "keywords": [
